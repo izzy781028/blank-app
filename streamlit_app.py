@@ -19,9 +19,12 @@ if not st.session_state.authenticated:
         st.error("❌ 密碼錯誤，請重新輸入！")
     st.stop()
 
-# ==================== 3. 字典定義區 (針對 Nano Banana 2 / SD 架構優化) ====================
+# ==================== 3. 字典定義區 ====================
 # SD 必備起手式畫質詞
 base_quality = "masterpiece, best quality, highres, ultra-detailed, 8k resolution"
+
+# SD 萬用防崩壞負面提示詞 (隱藏基底)
+base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
 # SD 喜歡逗號分隔的 Tags
 dict_style = {
@@ -41,7 +44,6 @@ dict_angle = {"平視": "eye level", "仰視": "from below, looking up", "俯視
 dict_relation = {"直視鏡頭 (Looking at Camera)": "looking at viewer", "過肩鏡頭": "over the shoulder", "第一人稱視角": "first-person view, POV", "旁觀者/側面視角": "profile, side view", "背後跟隨視角": "from behind, back view"}
 dict_light = {"白天自然光": "natural light, sunlight", "黃昏日落暖光 (Magic hour)": "golden hour, sunset lighting", "夜晚": "night, ambient lighting", "棚拍柔光": "soft studio lighting, softbox", "高反差戲劇光": "dramatic lighting, high contrast", "冷色科技光": "cool tone, blue and teal lighting"}
 
-# ⭐ 更新比例字典，加入 4:3, 3:4, 21:9
 dict_ratio = {
     "橫式簡報滿版 (16:9)": "16:9 aspect ratio, landscape", 
     "IG限動 (9:16)": "9:16 aspect ratio, portrait", 
@@ -129,9 +131,21 @@ with col2:
 
 with col3:
     relation_choice = st.selectbox("👁️ 鏡頭互動關係", list(dict_relation.keys()))
-    # ⭐ 更改標題名稱，並對應更新後的比例清單
     ratio_choice = st.selectbox("📏 畫面比例", list(dict_ratio.keys()))
     append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾 (例如: 16:9 aspect ratio)", value=False)
+
+st.divider()
+
+# --- 【第四區：負面提示詞】 ---
+st.subheader("4. 負面提示詞 (Negative Prompt) - 選填")
+st.markdown("💡 **什麼是負面提示詞？** 告訴 AI「你不希望畫面中出現什麼」。系統已內建防崩壞咒語，您可在此補充。")
+
+# 提供清楚的輸入指示
+user_negative = st.text_input(
+    "🚫 想要排除的額外元素 (請用「空白鍵」隔開不同的詞)", 
+    placeholder="例如: text logo watermark ugly trees", 
+    help="只要打完單字按空白鍵，系統就會自動幫您轉換成 AI 懂的格式！"
+)
 
 st.divider()
 
@@ -142,13 +156,10 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
     if user_keyword.strip() == "" or user_background.strip() == "":
         st.error("⚠️ 請至少填寫「畫面主角」與「背景場景」！")
     else:
-        # 1. 處理主角與動作
+        # [處理正向提示詞]
         subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
-
-        # 2. 處理光線邏輯
         final_light = custom_light_prompt if use_light_ref else dict_light[light_choice]
 
-        # 3. 組合主體 Prompt (SD 排序：畫質 -> 主角 -> 場景 -> 攝影機 -> 風格光影)
         base_prompt = (
             f"{base_quality}, "
             f"{subject_and_action}, "
@@ -160,31 +171,42 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             f"{final_light}"
         )
         
-        # 4. 加上參考圖 Prompt
         if ref_prompts:
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts)
         else:
             final_prompt = base_prompt
             
-        # 5. 如果使用者勾選了加入比例指令，塞到最後面
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
-        
-        st.success("✅ 成功生成提示詞 (Prompt)！")
-        st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵複製：**")
-        st.code(final_prompt, language="text")
-        
-        # ⭐ 增加新比例對應的寬高像素建議值
-        width, height = 1920, 1080 # 預設 16:9
-        if "9:16" in ratio_choice: 
-            width, height = 1080, 1920
-        elif "1:1" in ratio_choice: 
-            width, height = 1024, 1024
-        elif "4:3" in ratio_choice:
-            width, height = 1440, 1080
-        elif "3:4" in ratio_choice:
-            width, height = 1080, 1440
-        elif "21:9" in ratio_choice:
-            width, height = 2560, 1080
             
-        st.info(f"⚙️ 建議在主介面設定的尺寸參數：寬度 {width}px, 高度 {height}px")
+        # [處理負面提示詞邏輯]
+        # 把使用者輸入的詞用空白鍵切開，再用逗號重新組合起來
+        custom_neg_tags = ""
+        if user_negative.strip() != "":
+            # 替換掉可能不小心輸入的逗號，統一用空白切割，過濾掉空字串
+            word_list = [word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
+            custom_neg_tags = ", ".join(word_list)
+        
+        # 最終負面提示詞 = 使用者輸入(如果有) + 系統內建防崩壞基底
+        if custom_neg_tags:
+            final_negative_prompt = f"{custom_neg_tags}, {base_negative}"
+        else:
+            final_negative_prompt = base_negative
+
+        # ---------------- 顯示結果 ----------------
+        st.success("✅ 成功生成提示詞！請分別複製下方指令貼入生成器。")
+        st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵複製**")
+        
+        col_out1, col_out2 = st.columns(2)
+        
+        with col_out1:
+            st.markdown("🟩 **正向提示詞 (Prompt)**")
+            st.caption("請貼在主要的輸入框中")
+            st.code(final_prompt, language="text")
+            
+        with col_out2:
+            st.markdown("🟥 **負面提示詞 (Negative Prompt)**")
+            st.caption("請貼在 Negative Prompt 或排除元素的輸入框中")
+            st.code(final_negative_prompt, language="text")
+        
+        st.info(f"💡 【尺寸參數建議】： 寬度 {1920 if '16:9' in ratio_choice else (1080 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1440 if '4:3' in ratio_choice else (1080 if '3:4' in ratio_choice else 2560))))}px, 高度 {1080 if '16:9' in ratio_choice else (1920 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1080 if '4:3' in ratio_choice else (1440 if '3:4' in ratio_choice else 1080))))}px")
