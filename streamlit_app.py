@@ -19,20 +19,35 @@ if not st.session_state.authenticated:
         st.error("❌ 密碼錯誤，請重新輸入！")
     st.stop()
 
-# ==================== 3. 字典定義區 ====================
-dict_style = {"寫實商業攝影": "realistic commercial photography, highly detailed, photorealistic", "高級精品感": "high-end luxury aesthetic, sleek, editorial fashion photography", "科技未來感": "cyberpunk, sci-fi futuristic, glowing neon aesthetics", "溫暖生活感": "warm lifestyle photography, cozy atmosphere, candid", "年輕潮流感": "youthful trendy vibe, streetwear aesthetics, dynamic", "日系清透": "Japanese clear aesthetic, soft airy vibe, muted pastel colors", "歐美廣告劇照": "cinematic commercial still, dramatic movie aesthetic, 35mm film", "插畫風": "digital illustration, vector art style, flat design", "3D 視覺風": "3D render, Octane render, Unreal Engine 5, Pixar style"}
-dict_shot = {"極特寫": "extreme close-up shot, macro photography", "特寫": "close-up shot", "半身": "medium shot, waist up", "膝上景": "cowboy shot, knee up shot", "全身景": "full body shot", "遠景": "wide shot, long shot"}
-dict_angle = {"平視": "eye-level shot", "仰視": "low angle shot", "俯視": "high angle shot", "傾斜荷蘭角": "Dutch angle, tilted frame"}
-dict_relation = {"直視鏡頭 (Looking at Camera)": "looking directly at viewer", "過肩鏡頭": "over the shoulder shot, OTS", "第一人稱視角": "first-person view, POV", "旁觀者/側面視角": "profile shot, side view", "背後跟隨視角": "shot from behind, back view"}
-dict_light = {"白天自然光": "bright natural sunlight", "黃昏日落暖光 (Magic hour)": "golden hour lighting", "夜晚": "night time, ambient night lighting", "棚拍柔光": "soft studio lighting, softbox", "高反差戲劇光": "dramatic high contrast lighting, chiaroscuro", "冷色科技光": "cool color palette, blue and teal lighting"}
+# ==================== 3. 字典定義區 (針對 Nano Banana 2 / SD 架構優化) ====================
+# SD 必備起手式畫質詞
+base_quality = "masterpiece, best quality, highres, ultra-detailed, 8k resolution"
 
-# 畫面比例字典 (為加入 prompt 準備)
-dict_ratio = {"橫式簡報滿版 (16:9)": "--ar 16:9", "IG限動 (9:16)": "--ar 9:16", "方形 (1:1)": "--ar 1:1"}
+# SD 喜歡逗號分隔的 Tags
+dict_style = {
+    "寫實商業攝影": "realistic, photorealistic, RAW photo, commercial photography, sharp focus", 
+    "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
+    "科技未來感": "cyberpunk, sci-fi, futuristic, glowing neon lights, intricate mechanical details", 
+    "溫暖生活感": "warm lifestyle, slice of life, cozy atmosphere, candid photography", 
+    "年輕潮流感": "trendy streetwear, youth culture, dynamic, vibrant colors", 
+    "日系清透": "Japanese aesthetic, clear and airy, muted pastel colors, soft focus, film photography", 
+    "歐美廣告劇照": "cinematic still, Hollywood movie aesthetic, dramatic lighting, 35mm photograph", 
+    "插畫風": "digital illustration, vibrant colors, flat design, vector art, 2D", 
+    "3D 視覺風": "3D render, octane render, unreal engine 5, path tracing, volumetric lighting"
+}
+
+dict_shot = {"極特寫": "extreme close-up", "特寫": "close-up", "半身": "medium shot, waist up", "膝上景": "cowboy shot", "全身景": "full body", "遠景": "wide shot, wide angle"}
+dict_angle = {"平視": "eye level", "仰視": "from below, looking up", "俯視": "from above, looking down", "傾斜荷蘭角": "dutch angle"}
+dict_relation = {"直視鏡頭 (Looking at Camera)": "looking at viewer", "過肩鏡頭": "over the shoulder", "第一人稱視角": "first-person view, POV", "旁觀者/側面視角": "profile, side view", "背後跟隨視角": "from behind, back view"}
+dict_light = {"白天自然光": "natural light, sunlight", "黃昏日落暖光 (Magic hour)": "golden hour, sunset lighting", "夜晚": "night, ambient lighting", "棚拍柔光": "soft studio lighting, softbox", "高反差戲劇光": "dramatic lighting, high contrast", "冷色科技光": "cool tone, blue and teal lighting"}
+
+# 針對 SD 修改的畫面比例寫法 (移除不支援的 --ar)
+dict_ratio = {"橫式簡報滿版 (16:9)": "16:9 aspect ratio, landscape", "IG限動 (9:16)": "9:16 aspect ratio, portrait", "方形 (1:1)": "1:1 aspect ratio, square"}
 
 # ==================== 4. UI 介面設計 ====================
 
 st.title("🚀 AI 圖片提示詞生成器")
-st.write("精準控制畫面分鏡，自動計算參考圖編號對應 Prompt。")
+st.write("精準控制畫面分鏡，專為 Nano Banana 2 (Stable Diffusion) 引擎打造。")
 
 # --- 【第一區：核心內容】 ---
 st.subheader("1. 畫面核心內容 (Who, Doing What, Where)")
@@ -48,7 +63,7 @@ st.divider()
 
 # --- 【第二區：參考圖數量對應與連動】 ---
 st.subheader("2. 參考圖片參數設定 (自動計算 Image 編號)")
-st.warning("⚠️ **重要提醒：** 請在主介面上傳圖片時，務必依照下方 **「人物 ➔ 物件 ➔ 光線」的先後順序上傳**，否則 [Image X] 的編號會無法正確對應！")
+st.warning("⚠️ **重要提醒：** 請在 Nano Banana 2 上傳圖片時，務必依照下方 **「人物 ➔ 物件 ➔ 光線」的先後順序上傳**，否則 [Image X] 的編號會無法正確對應！")
 
 img_counter = 1 
 ref_prompts = [] 
@@ -108,8 +123,8 @@ with col2:
 with col3:
     relation_choice = st.selectbox("👁️ 鏡頭互動關係", list(dict_relation.keys()))
     ratio_choice = st.selectbox("📏 提案畫面比例", list(dict_ratio.keys()))
-    # ⭐ 新增的勾選按鈕：決定是否將比例指令加到 prompt 裡
-    append_ratio = st.checkbox("☑️ 將比例指令加入提示詞結尾 (例如: --ar 16:9)", value=False)
+    # 修改勾選按鈕文字，符合 SD 邏輯
+    append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾 (例如: 16:9 aspect ratio)", value=False)
 
 st.divider()
 
@@ -121,19 +136,20 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
         st.error("⚠️ 請至少填寫「畫面主角」與「背景場景」！")
     else:
         # 1. 處理主角與動作
-        subject_and_action = f"{user_keyword} {user_action}" if user_action.strip() else f"{user_keyword}"
+        subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
 
         # 2. 處理光線邏輯
         final_light = custom_light_prompt if use_light_ref else dict_light[light_choice]
 
-        # 3. 組合主體 Prompt
+        # 3. 組合主體 Prompt (⭐ 針對 SD 修改排序：畫質 -> 主角 -> 場景 -> 攝影機 -> 風格光影)
         base_prompt = (
-            f"{dict_style[style_choice]}, "
+            f"{base_quality}, "
+            f"{subject_and_action}, "
+            f"in {user_background}, "
             f"{dict_shot[shot_choice]}, "
             f"{dict_angle[angle_choice]}, "
-            f"{subject_and_action}, "
             f"{dict_relation[relation_choice]}, "
-            f"in {user_background}, "
+            f"{dict_style[style_choice]}, "
             f"{final_light}"
         )
         
@@ -143,9 +159,9 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
         else:
             final_prompt = base_prompt
             
-        # 5. 如果使用者勾選了加入比例指令，就把 --ar 塞到最後面
+        # 5. 如果使用者勾選了加入比例指令，塞到最後面
         if append_ratio:
-            final_prompt += f" {dict_ratio[ratio_choice]}"
+            final_prompt += f", {dict_ratio[ratio_choice]}"
         
         st.success("✅ 成功生成提示詞 (Prompt)！")
         st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵複製：**")
