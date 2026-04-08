@@ -36,10 +36,12 @@ dict_style = {
 }
 
 dict_shot = {"極特寫": "extreme close-up", "特寫": "close-up", "半身": "medium shot, waist up", "膝上景": "cowboy shot", "全身景": "full body", "遠景": "wide shot, wide angle"}
+
+# ⭐ 移除 aerial perspective，改為更適合人像的向下傾斜視角
 dict_angle = {
     "平視 (Eye Level)": "eye-level angle, straight-on", 
-    "仰視 (Low Angle - 攝影機在下)": "low angle shot, looking up", 
-    "俯視 (High Angle - 攝影機在上)": "high angle shot, looking down", 
+    "仰視 (Low Angle - 攝影機在下)": "low angle shot, shot from below, camera pointing upward", 
+    "俯視 (High Angle - 攝影機在上)": "high angle shot, shot from above, downward angle", 
     "傾斜荷蘭角 (Dutch Angle)": "dutch angle, tilted frame"
 }
 
@@ -108,7 +110,6 @@ st.markdown("---")
 st.subheader("1. 畫面核心內容 (Who, Doing What, Where)")
 col_text1, col_text2, col_text3 = st.columns(3)
 with col_text1:
-    # ⭐ 更改預設主角為「台灣女性」
     user_keyword = st.text_input(
         "📦 畫面主角 (Who) *必填", 
         value="同參考圖主角" if is_remake_mode else "一位穿白襯衫的年輕台灣女性",
