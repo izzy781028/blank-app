@@ -35,9 +35,17 @@ dict_style = {
     "3D 視覺風": "3D render, octane render, unreal engine 5, path tracing, volumetric lighting"
 }
 
-dict_shot = {"極特寫": "extreme close-up", "特寫": "close-up", "半身": "medium shot, waist up", "膝上景": "cowboy shot", "全身景": "full body", "遠景": "wide shot, wide angle"}
+# ⭐ 新增「超大遠景」，並加上 establishing shot (建立鏡頭) 和 tiny subject (渺小主體) 確保畫面夠寬闊
+dict_shot = {
+    "極特寫": "extreme close-up", 
+    "特寫": "close-up", 
+    "半身": "medium shot, waist up", 
+    "膝上景": "cowboy shot", 
+    "全身景": "full body", 
+    "遠景": "wide shot, wide angle",
+    "超大遠景": "extreme wide shot, extreme long shot, establishing shot, tiny subject"
+}
 
-# ⭐ 移除 aerial perspective，改為更適合人像的向下傾斜視角
 dict_angle = {
     "平視 (Eye Level)": "eye-level angle, straight-on", 
     "仰視 (Low Angle - 攝影機在下)": "low angle shot, shot from below, camera pointing upward", 
