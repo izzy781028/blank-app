@@ -108,9 +108,10 @@ st.markdown("---")
 st.subheader("1. 畫面核心內容 (Who, Doing What, Where)")
 col_text1, col_text2, col_text3 = st.columns(3)
 with col_text1:
+    # ⭐ 更改預設主角為「台灣女性」
     user_keyword = st.text_input(
         "📦 畫面主角 (Who) *必填", 
-        value="同參考圖主角" if is_remake_mode else "一位穿白襯衫的年輕女性",
+        value="同參考圖主角" if is_remake_mode else "一位穿白襯衫的年輕台灣女性",
         disabled=is_remake_mode,
         help="重構模式下，將強制繼承參考圖主角。" if is_remake_mode else ""
     )
@@ -221,7 +222,6 @@ with col2:
 with col3:
     position_choice = st.selectbox("👁️ 鏡頭位置", list(dict_position.keys()))
     
-    # ⭐ 更改標題與加入備註
     st.markdown("**鏡頭位置示意圖：**")
     radar_html = dict_position_map[position_choice]
     st.markdown(f"""
@@ -229,7 +229,7 @@ with col3:
             {radar_html}
         </div>
     """, unsafe_allow_html=True)
-    st.caption("*( 👤 人像下方為正前方 )*") # ⭐ 備註小字
+    st.caption("*( 👤 人像下方為正前方 )*")
     
     ratio_choice = st.selectbox("📏 畫面比例", list(dict_ratio.keys()))
     append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾", value=False)
