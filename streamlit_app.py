@@ -23,10 +23,9 @@ if not st.session_state.authenticated:
 # SD 必備起手式畫質詞
 base_quality = "masterpiece, best quality, highres, ultra-detailed, 8k resolution"
 
-# SD 萬用防崩壞負面提示詞 (隱藏基底)
+# SD 萬用防崩壞負面提示詞
 base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
-# SD 喜歡逗號分隔的 Tags
 dict_style = {
     "寫實商業攝影": "realistic, photorealistic, RAW photo, commercial photography, sharp focus", 
     "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
@@ -40,7 +39,15 @@ dict_style = {
 }
 
 dict_shot = {"極特寫": "extreme close-up", "特寫": "close-up", "半身": "medium shot, waist up", "膝上景": "cowboy shot", "全身景": "full body", "遠景": "wide shot, wide angle"}
-dict_angle = {"平視": "eye level", "仰視": "from below, looking up", "俯視": "from above, looking down", "傾斜荷蘭角": "dutch angle"}
+
+# ⭐ 修正鏡頭角度的定義，避免干擾人物視線
+dict_angle = {
+    "平視 (Eye Level)": "eye-level shot, straight-on", 
+    "仰視 (Low Angle - 攝影機在下)": "low angle shot, shot from below", 
+    "俯視 (High Angle - 攝影機在上)": "high angle shot, shot from above", 
+    "傾斜荷蘭角 (Dutch Angle)": "dutch angle, tilted frame"
+}
+
 dict_relation = {"直視鏡頭 (Looking at Camera)": "looking at viewer", "過肩鏡頭": "over the shoulder", "第一人稱視角": "first-person view, POV", "旁觀者/側面視角": "profile, side view", "背後跟隨視角": "from behind, back view"}
 dict_light = {"白天自然光": "natural light, sunlight", "黃昏日落暖光 (Magic hour)": "golden hour, sunset lighting", "夜晚": "night, ambient lighting", "棚拍柔光": "soft studio lighting, softbox", "高反差戲劇光": "dramatic lighting, high contrast", "冷色科技光": "cool tone, blue and teal lighting"}
 
@@ -127,7 +134,8 @@ with col1:
 
 with col2:
     shot_choice = st.selectbox("🔲 鏡頭大小", list(dict_shot.keys()))
-    angle_choice = st.selectbox("📐 鏡頭角度", list(dict_angle.keys()))
+    # ⭐ 更新角度選項的對應
+    angle_choice = st.selectbox("📐 鏡頭角度", list(dict_angle.keys()), help="已優化底層提示詞，避免干擾主角視線方向。")
 
 with col3:
     relation_choice = st.selectbox("👁️ 鏡頭互動關係", list(dict_relation.keys()))
@@ -193,8 +201,8 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
         st.success("✅ 成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵全選複製**")
         
-        # ⭐ 將正負面提示詞合併成一個大字串，並加上標籤區分
-        combined_output = f"[Prompt]\n{final_prompt}\n\n[Negative Prompt]\n{final_negative_prompt}"
+        # ⭐ 移除 [Prompt] 標籤，直接輸出正向提示詞
+        combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{final_negative_prompt}"
         
         st.code(combined_output, language="text")
         
