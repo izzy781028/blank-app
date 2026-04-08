@@ -41,8 +41,15 @@ dict_angle = {"平視": "eye level", "仰視": "from below, looking up", "俯視
 dict_relation = {"直視鏡頭 (Looking at Camera)": "looking at viewer", "過肩鏡頭": "over the shoulder", "第一人稱視角": "first-person view, POV", "旁觀者/側面視角": "profile, side view", "背後跟隨視角": "from behind, back view"}
 dict_light = {"白天自然光": "natural light, sunlight", "黃昏日落暖光 (Magic hour)": "golden hour, sunset lighting", "夜晚": "night, ambient lighting", "棚拍柔光": "soft studio lighting, softbox", "高反差戲劇光": "dramatic lighting, high contrast", "冷色科技光": "cool tone, blue and teal lighting"}
 
-# 針對 SD 修改的畫面比例寫法 (移除不支援的 --ar)
-dict_ratio = {"橫式簡報滿版 (16:9)": "16:9 aspect ratio, landscape", "IG限動 (9:16)": "9:16 aspect ratio, portrait", "方形 (1:1)": "1:1 aspect ratio, square"}
+# ⭐ 更新比例字典，加入 4:3, 3:4, 21:9
+dict_ratio = {
+    "橫式簡報滿版 (16:9)": "16:9 aspect ratio, landscape", 
+    "IG限動 (9:16)": "9:16 aspect ratio, portrait", 
+    "方形 (1:1)": "1:1 aspect ratio, square",
+    "傳統橫式 (4:3)": "4:3 aspect ratio, landscape",
+    "社群直式 (3:4)": "3:4 aspect ratio, portrait",
+    "電影寬螢幕 (21:9)": "21:9 aspect ratio, ultrawide, cinematic"
+}
 
 # ==================== 4. UI 介面設計 ====================
 
@@ -122,8 +129,8 @@ with col2:
 
 with col3:
     relation_choice = st.selectbox("👁️ 鏡頭互動關係", list(dict_relation.keys()))
-    ratio_choice = st.selectbox("📏 提案畫面比例", list(dict_ratio.keys()))
-    # 修改勾選按鈕文字，符合 SD 邏輯
+    # ⭐ 更改標題名稱，並對應更新後的比例清單
+    ratio_choice = st.selectbox("📏 畫面比例", list(dict_ratio.keys()))
     append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾 (例如: 16:9 aspect ratio)", value=False)
 
 st.divider()
@@ -141,7 +148,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
         # 2. 處理光線邏輯
         final_light = custom_light_prompt if use_light_ref else dict_light[light_choice]
 
-        # 3. 組合主體 Prompt (⭐ 針對 SD 修改排序：畫質 -> 主角 -> 場景 -> 攝影機 -> 風格光影)
+        # 3. 組合主體 Prompt (SD 排序：畫質 -> 主角 -> 場景 -> 攝影機 -> 風格光影)
         base_prompt = (
             f"{base_quality}, "
             f"{subject_and_action}, "
@@ -167,9 +174,17 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
         st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵複製：**")
         st.code(final_prompt, language="text")
         
-        # 計算寬高參數顯示給需要獨立填寫的生成器看
-        width, height = 1920, 1080
-        if "9:16" in ratio_choice: width, height = 1080, 1920
-        elif "1:1" in ratio_choice: width, height = 1024, 1024
+        # ⭐ 增加新比例對應的寬高像素建議值
+        width, height = 1920, 1080 # 預設 16:9
+        if "9:16" in ratio_choice: 
+            width, height = 1080, 1920
+        elif "1:1" in ratio_choice: 
+            width, height = 1024, 1024
+        elif "4:3" in ratio_choice:
+            width, height = 1440, 1080
+        elif "3:4" in ratio_choice:
+            width, height = 1080, 1440
+        elif "21:9" in ratio_choice:
+            width, height = 2560, 1080
             
         st.info(f"⚙️ 建議在主介面設定的尺寸參數：寬度 {width}px, 高度 {height}px")
