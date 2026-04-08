@@ -1,9 +1,10 @@
 import streamlit as st
 
 # ==================== 1. 網頁基本設定 ====================
-st.set_page_config(layout="wide", page_title="AE 提案圖生成器")
+st.set_page_config(layout="wide", page_title="AI 圖片提示詞生成器")
 
 # ==================== 2. 簡易密碼鎖設定 ====================
+# ⭐ 更新通關密碼
 TEAM_PASSWORD = "52654260" 
 
 if "authenticated" not in st.session_state:
@@ -28,7 +29,8 @@ dict_light = {"白天自然光": "bright natural sunlight", "黃昏日落暖光 
 
 # ==================== 4. UI 介面設計 ====================
 
-st.title("🚀 業務提案概念圖生成器")
+# ⭐ 更新網頁大標題
+st.title("🚀 AI 圖片提示詞生成器")
 st.write("精準控制畫面分鏡，自動計算參考圖編號對應 Prompt。")
 
 # --- 【第一區：核心內容】 ---
@@ -45,6 +47,7 @@ st.divider()
 
 # --- 【第二區：參考圖數量對應與連動】 ---
 st.subheader("2. 參考圖片參數設定 (自動計算 Image 編號)")
+st.warning("⚠️ **重要提醒：** 請在主介面上傳圖片時，務必依照下方 **「人物 ➔ 物件 ➔ 光線」的先後順序上傳**，否則 [Image X] 的編號會無法正確對應！")
 
 # 設定一個全域計數器，用來動態計算 Image X 的數字
 img_counter = 1 
@@ -81,17 +84,16 @@ with col_ref2:
         attr_str = f" as {obj_attr}" if obj_attr else ""
         ref_prompts.append(f"referencing object {', '.join(obj_labels)}{attr_str}")
 
-# 2.3 光線與色調參考圖 (新增數量輸入)
+# 2.3 光線與色調參考圖
 with col_ref3:
     use_light_ref = st.checkbox("💡 啟用光線與色調參考圖")
     if use_light_ref:
         light_count = st.number_input("輸入光線參考圖數量", min_value=1, max_value=10, value=1, step=1)
-        st.info(f"⚠️ 將鎖定下方選單，並佔用 {light_count} 個 Image 編號")
+        st.info(f"鎖定下方選單，並佔用 {light_count} 個 Image 編號")
         
         light_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + light_count)]
         img_counter += light_count 
         
-        # 建立光線的獨立 Prompt，支援多張圖的編號
         custom_light_prompt = f"matching the exact lighting, color grading, and texture of {', '.join(light_labels)}"
 
 st.divider()
@@ -103,7 +105,6 @@ col1, col2, col3 = st.columns(3)
 with col1:
     style_choice = st.selectbox("✨ 視覺風格", list(dict_style.keys()))
     
-    # 【連動防呆】：光線選單失效邏輯維持不變
     light_choice = st.selectbox(
         "💡 光線與色調", 
         list(dict_light.keys()), 
@@ -131,7 +132,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
         # 1. 處理主角與動作
         subject_and_action = f"{user_keyword} {user_action}" if user_action.strip() else f"{user_keyword}"
 
-        # 2. 處理光線邏輯 (判斷要用下拉選單，還是參考圖的提示詞)
+        # 2. 處理光線邏輯
         final_light = custom_light_prompt if use_light_ref else dict_light[light_choice]
 
         # 3. 組合主體 Prompt
@@ -145,13 +146,14 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             f"{final_light}"
         )
         
-        # 4. 把人物、物件的參考 Prompt 加到最後面
+        # 4. 加上參考圖 Prompt
         if ref_prompts:
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts)
         else:
             final_prompt = base_prompt
         
         st.success("✅ 成功生成提示詞 (Prompt)！")
+        st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵複製：**")
         st.code(final_prompt, language="text")
         
         # 計算寬高參數顯示
