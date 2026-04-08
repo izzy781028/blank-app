@@ -56,7 +56,6 @@ dict_position = {
     "第一人稱視角 (POV)": "first-person view, POV, seeing through eyes"
 }
 
-# ⭐ 修正：使用 HTML 專用的換行符號 <br>
 dict_position_map = {
     "正前方拍攝": "▫️ ▫️ ▫️<br>▫️ 👤 ▫️<br>▫️ 📷 ▫️",
     "左前方拍攝": "▫️ ▫️ ▫️<br>▫️ 👤 ▫️<br>📷 ▫️ ▫️",
@@ -222,15 +221,15 @@ with col2:
 with col3:
     position_choice = st.selectbox("👁️ 鏡頭位置", list(dict_position.keys()))
     
-    # ⭐ 升級版雷達圖：使用 HTML 與 CSS 繪製置中的深色透明框
-    st.markdown("**俯視角示意圖：**")
+    # ⭐ 更改標題與加入備註
+    st.markdown("**鏡頭位置示意圖：**")
     radar_html = dict_position_map[position_choice]
     st.markdown(f"""
-        <div style='background-color: rgba(128,128,128,0.1); padding: 15px; border-radius: 8px; text-align: center; font-size: 22px; line-height: 1.5; letter-spacing: 2px;'>
+        <div style='background-color: rgba(128,128,128,0.1); padding: 15px; border-radius: 8px; text-align: center; font-size: 22px; line-height: 1.5; letter-spacing: 2px; margin-bottom: 5px;'>
             {radar_html}
         </div>
-        <br>
     """, unsafe_allow_html=True)
+    st.caption("*( 👤 人像下方為正前方 )*") # ⭐ 備註小字
     
     ratio_choice = st.selectbox("📏 畫面比例", list(dict_ratio.keys()))
     append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾", value=False)
@@ -277,16 +276,13 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
     if not is_remake_mode and (user_keyword.strip() == "" or user_background.strip() == ""):
         st.error("⚠️ 一般模式下，請確實填寫「畫面主角」與「背景場景」！")
     else:
-        # [處理負面提示詞]
         custom_neg_tags = ""
         if user_negative.strip() != "":
             word_list = [word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
         final_negative_prompt = f"{custom_neg_tags}, {base_negative}" if custom_neg_tags else base_negative
 
-        # [處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
-            # === 畫面重構模式 ===
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             
             if user_action.strip():
@@ -299,7 +295,6 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
             
         else:
-            # === 一般生成模式 ===
             subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
             final_light = custom_light_prompt if use_light_ref else dict_light[light_choice]
             final_style = "" if is_also_style_ref else f"{dict_style[style_choice]}, "
@@ -321,7 +316,6 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
 
-        # ---------------- 顯示結果 ----------------
         st.success("✅ 成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵全選複製**")
         
