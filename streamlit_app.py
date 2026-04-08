@@ -140,7 +140,6 @@ st.divider()
 st.subheader("4. 負面提示詞 (Negative Prompt) - 選填")
 st.markdown("💡 **什麼是負面提示詞？** 告訴 AI「你不希望畫面中出現什麼」。系統已內建防崩壞咒語，您可在此補充。")
 
-# 提供清楚的輸入指示
 user_negative = st.text_input(
     "🚫 想要排除的額外元素 (請用「空白鍵」隔開不同的詞)", 
     placeholder="例如: text logo watermark ugly trees", 
@@ -180,33 +179,23 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             final_prompt += f", {dict_ratio[ratio_choice]}"
             
         # [處理負面提示詞邏輯]
-        # 把使用者輸入的詞用空白鍵切開，再用逗號重新組合起來
         custom_neg_tags = ""
         if user_negative.strip() != "":
-            # 替換掉可能不小心輸入的逗號，統一用空白切割，過濾掉空字串
             word_list = [word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
         
-        # 最終負面提示詞 = 使用者輸入(如果有) + 系統內建防崩壞基底
         if custom_neg_tags:
             final_negative_prompt = f"{custom_neg_tags}, {base_negative}"
         else:
             final_negative_prompt = base_negative
 
-        # ---------------- 顯示結果 ----------------
-        st.success("✅ 成功生成提示詞！請分別複製下方指令貼入生成器。")
-        st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵複製**")
+        # ---------------- 顯示合併結果 ----------------
+        st.success("✅ 成功生成提示詞！請點擊右上方按鈕一鍵複製。")
+        st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵全選複製**")
         
-        col_out1, col_out2 = st.columns(2)
+        # ⭐ 將正負面提示詞合併成一個大字串，並加上標籤區分
+        combined_output = f"[Prompt]\n{final_prompt}\n\n[Negative Prompt]\n{final_negative_prompt}"
         
-        with col_out1:
-            st.markdown("🟩 **正向提示詞 (Prompt)**")
-            st.caption("請貼在主要的輸入框中")
-            st.code(final_prompt, language="text")
-            
-        with col_out2:
-            st.markdown("🟥 **負面提示詞 (Negative Prompt)**")
-            st.caption("請貼在 Negative Prompt 或排除元素的輸入框中")
-            st.code(final_negative_prompt, language="text")
+        st.code(combined_output, language="text")
         
         st.info(f"💡 【尺寸參數建議】： 寬度 {1920 if '16:9' in ratio_choice else (1080 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1440 if '4:3' in ratio_choice else (1080 if '3:4' in ratio_choice else 2560))))}px, 高度 {1080 if '16:9' in ratio_choice else (1920 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1080 if '4:3' in ratio_choice else (1440 if '3:4' in ratio_choice else 1080))))}px")
