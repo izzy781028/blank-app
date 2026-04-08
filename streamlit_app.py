@@ -56,6 +56,20 @@ dict_position = {
     "第一人稱視角 (POV)": "first-person view, POV, seeing through eyes"
 }
 
+# ⭐ 修正：使用 HTML 專用的換行符號 <br>
+dict_position_map = {
+    "正前方拍攝": "▫️ ▫️ ▫️<br>▫️ 👤 ▫️<br>▫️ 📷 ▫️",
+    "左前方拍攝": "▫️ ▫️ ▫️<br>▫️ 👤 ▫️<br>📷 ▫️ ▫️",
+    "右前方拍攝": "▫️ ▫️ ▫️<br>▫️ 👤 ▫️<br>▫️ ▫️ 📷",
+    "正左側拍攝": "▫️ ▫️ ▫️<br>📷 👤 ▫️<br>▫️ ▫️ ▫️",
+    "正右側拍攝": "▫️ ▫️ ▫️<br>▫️ 👤 📷<br>▫️ ▫️ ▫️",
+    "左後方拍攝": "📷 ▫️ ▫️<br>▫️ 👤 ▫️<br>▫️ ▫️ ▫️",
+    "右後方拍攝": "▫️ ▫️ 📷<br>▫️ 👤 ▫️<br>▫️ ▫️ ▫️",
+    "正後方拍攝": "▫️ 📷 ▫️<br>▫️ 👤 ▫️<br>▫️ ▫️ ▫️",
+    "過肩鏡頭 (Over the shoulder)": "▫️ ▫️ ▫️<br>▫️ 👤 ▫️<br>▫️ 📷 👤",
+    "第一人稱視角 (POV)": "▫️ ▫️ ▫️<br>▫️ 👀 ▫️<br>▫️ ▫️ ▫️"
+}
+
 dict_light = {
     "白天自然光": "natural light, sunlight", 
     "黃昏日落暖光 (Magic hour)": "golden hour, sunset lighting", 
@@ -102,7 +116,6 @@ with col_text1:
         help="重構模式下，將強制繼承參考圖主角。" if is_remake_mode else ""
     )
 with col_text2:
-    # ⭐ 加上表情提示
     user_action = st.text_input(
         "🏃‍♂️ 主角動作 (Doing What)", 
         value="" if is_remake_mode else "看向窗外，手裡拿著咖啡，神情放鬆", 
@@ -208,6 +221,17 @@ with col2:
 
 with col3:
     position_choice = st.selectbox("👁️ 鏡頭位置", list(dict_position.keys()))
+    
+    # ⭐ 升級版雷達圖：使用 HTML 與 CSS 繪製置中的深色透明框
+    st.markdown("**俯視角示意圖：**")
+    radar_html = dict_position_map[position_choice]
+    st.markdown(f"""
+        <div style='background-color: rgba(128,128,128,0.1); padding: 15px; border-radius: 8px; text-align: center; font-size: 22px; line-height: 1.5; letter-spacing: 2px;'>
+            {radar_html}
+        </div>
+        <br>
+    """, unsafe_allow_html=True)
+    
     ratio_choice = st.selectbox("📏 畫面比例", list(dict_ratio.keys()))
     append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾", value=False)
 
