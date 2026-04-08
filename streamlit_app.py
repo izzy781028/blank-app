@@ -37,24 +37,23 @@ dict_style = {
 
 dict_shot = {"極特寫": "extreme close-up", "特寫": "close-up", "半身": "medium shot, waist up", "膝上景": "cowboy shot", "全身景": "full body", "遠景": "wide shot, wide angle"}
 dict_angle = {
-    "平視 (Eye Level)": "eye-level shot, straight-on", 
-    "仰視 (Low Angle - 攝影機在下)": "low angle shot, shot from below", 
-    "俯視 (High Angle - 攝影機在上)": "high angle shot, shot from above", 
+    "平視 (Eye Level)": "eye-level angle, straight-on", 
+    "仰視 (Low Angle - 攝影機在下)": "low angle shot, looking up", 
+    "俯視 (High Angle - 攝影機在上)": "high angle shot, looking down", 
     "傾斜荷蘭角 (Dutch Angle)": "dutch angle, tilted frame"
 }
 
-dict_relation = {
-    "正前方拍攝 (Front View)": "front view, shot from front",
-    "背後視角 (Back View)": "shot from behind, back view",
-    "側面/旁觀視角 (Side View)": "profile, side view, shot from side", 
-    "過肩鏡頭 (Over the shoulder)": "over the shoulder shot, OTS", 
+dict_position = {
+    "正前方拍攝": "front view, camera placed straight ahead",
+    "左前方拍攝": "front-left view, camera placed front-left",
+    "右前方拍攝": "front-right view, camera placed front-right",
+    "正左側拍攝": "left profile view, exact left side view",
+    "正右側拍攝": "right profile view, exact right side view",
+    "左後方拍攝": "back-left view, camera placed behind left shoulder",
+    "右後方拍攝": "back-right view, camera placed behind right shoulder",
+    "正後方拍攝": "back view, exact shot from behind",
+    "過肩鏡頭 (Over the shoulder)": "over the shoulder shot, OTS",
     "第一人稱視角 (POV)": "first-person view, POV, seeing through eyes"
-}
-
-dict_offset = {
-    "正中 (無偏移)": "",
-    "偏左 45 度 (從左側拍)": "shot from the left side, angled from left",
-    "偏右 45 度 (從右側拍)": "shot from the right side, angled from right"
 }
 
 dict_light = {
@@ -103,11 +102,12 @@ with col_text1:
         help="重構模式下，將強制繼承參考圖主角。" if is_remake_mode else ""
     )
 with col_text2:
+    # ⭐ 加上表情提示
     user_action = st.text_input(
         "🏃‍♂️ 主角動作 (Doing What)", 
-        value="" if is_remake_mode else "看向窗外，手裡拿著咖啡", 
-        placeholder="例如：看向窗外，手裡拿著咖啡", 
-        help="(可在此定義面向) 非必填。留白代表不更改動作。" if is_remake_mode else "(可在此定義面向) 非必填。"
+        value="" if is_remake_mode else "看向窗外，手裡拿著咖啡，神情放鬆", 
+        placeholder="例如：看向窗外，手裡拿著咖啡，燦爛微笑", 
+        help="(可在此定義面向與表情) 非必填。留白代表不更改動作。" if is_remake_mode else "(可在此定義面向與表情) 非必填。"
     )
 with col_text3:
     bg_label = "🖼️ 背景場景 (Where)" if is_remake_mode else "🖼️ 背景場景 (Where) *必填"
@@ -186,7 +186,7 @@ st.divider()
 
 # --- 【第三區：攝影與風格控制】 ---
 st.subheader("3. 攝影與風格控制")
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     style_choice = st.selectbox(
@@ -207,15 +207,7 @@ with col2:
     angle_choice = st.selectbox("📐 鏡頭角度", list(dict_angle.keys()))
 
 with col3:
-    relation_choice = st.selectbox("👁️ 鏡頭前後位置", list(dict_relation.keys()))
-    
-    # ⭐ 動態顯示鏡頭偏移選單
-    # 只有當選擇了「正前方拍攝」或「背後視角」時，才顯示水平偏移選項
-    offset_choice = "正中 (無偏移)"
-    if "Front View" in relation_choice or "Back View" in relation_choice:
-        offset_choice = st.selectbox("🧭 鏡頭水平偏移", list(dict_offset.keys()), help="可選擇從左偏或右偏拍攝。")
-
-with col4:
+    position_choice = st.selectbox("👁️ 鏡頭位置", list(dict_position.keys()))
     ratio_choice = st.selectbox("📏 畫面比例", list(dict_ratio.keys()))
     append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾", value=False)
 
@@ -235,14 +227,14 @@ st.divider()
 
 conflicts = []
 
-if "POV" in relation_choice:
+if "POV" in position_choice:
     conflicts.append("👀 **視角衝突**：選擇了「第一人稱視角 (POV)」，代表畫面由主角眼睛看出去，通常會**看不到主角本人**。")
 
 face_keywords = ["笑", "看", "眼", "嘴", "表情", "臉", "盯"]
-if "Back View" in relation_choice and any(word in user_action for word in face_keywords):
-    conflicts.append("👤 **面向衝突**：選擇了「背後視角」，但動作中包含了「臉部表情/視線」。可能會畫出詭異扭曲的畫面。")
+if ("後方" in position_choice) and any(word in user_action for word in face_keywords):
+    conflicts.append("👤 **面向衝突**：選擇了「後方視角」，但動作中包含了「臉部表情/視線」。可能會畫出詭異扭曲的畫面。")
 
-if shot_choice == "極特寫" and "Over the shoulder" in relation_choice:
+if shot_choice == "極特寫" and "過肩鏡頭" in position_choice:
     conflicts.append("📷 **鏡頭衝突**：「極特寫」視野極小，無法容納「過肩鏡頭」所需要的肩膀前景。")
 
 bg_lower = user_background.lower()
@@ -267,11 +259,6 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             word_list = [word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
         final_negative_prompt = f"{custom_neg_tags}, {base_negative}" if custom_neg_tags else base_negative
-        
-        # [組合鏡頭位置]
-        final_camera_position = dict_relation[relation_choice]
-        if dict_offset[offset_choice] != "":
-            final_camera_position += f", {dict_offset[offset_choice]}"
 
         # [處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
@@ -283,8 +270,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
-            # ⭐ 改變動詞為 moving camera view to
-            base_prompt += f", moving camera view to: {dict_shot[shot_choice]}, {dict_angle[angle_choice]}, {final_camera_position}"
+            base_prompt += f", moving camera view to: {dict_shot[shot_choice]}, {dict_angle[angle_choice]}, {dict_position[position_choice]}"
             
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
             
@@ -299,7 +285,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
                 f"in {user_background}, "
                 f"{dict_shot[shot_choice]}, "
                 f"{dict_angle[angle_choice]}, "
-                f"{final_camera_position}, "
+                f"{dict_position[position_choice]}, "
                 f"{final_style}"
                 f"{final_light}"
             )
