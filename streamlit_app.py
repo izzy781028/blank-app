@@ -45,13 +45,12 @@ dict_angle = {
 
 dict_relation = {
     "正前方拍攝 (Front View)": "front view, shot from front",
-    "側面/旁觀視角 (Side View)": "profile, side view, shot from side", 
     "背後視角 (Back View)": "shot from behind, back view",
+    "側面/旁觀視角 (Side View)": "profile, side view, shot from side", 
     "過肩鏡頭 (Over the shoulder)": "over the shoulder shot, OTS", 
     "第一人稱視角 (POV)": "first-person view, POV, seeing through eyes"
 }
 
-# ⭐ 新增：攝影機的水平左右偏移字典
 dict_offset = {
     "正中 (無偏移)": "",
     "偏左 45 度 (從左側拍)": "shot from the left side, angled from left",
@@ -187,7 +186,6 @@ st.divider()
 
 # --- 【第三區：攝影與風格控制】 ---
 st.subheader("3. 攝影與風格控制")
-# ⭐ 為了排版美觀，把這區改成 4 個 column
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
@@ -210,8 +208,12 @@ with col2:
 
 with col3:
     relation_choice = st.selectbox("👁️ 鏡頭前後位置", list(dict_relation.keys()))
-    # ⭐ 新增的左右偏移選單
-    offset_choice = st.selectbox("🧭 鏡頭水平偏移", list(dict_offset.keys()), help="可與前後位置組合，例如：背後視角 + 偏左 = 從左後方拍。")
+    
+    # ⭐ 動態顯示鏡頭偏移選單
+    # 只有當選擇了「正前方拍攝」或「背後視角」時，才顯示水平偏移選項
+    offset_choice = "正中 (無偏移)"
+    if "Front View" in relation_choice or "Back View" in relation_choice:
+        offset_choice = st.selectbox("🧭 鏡頭水平偏移", list(dict_offset.keys()), help="可選擇從左偏或右偏拍攝。")
 
 with col4:
     ratio_choice = st.selectbox("📏 畫面比例", list(dict_ratio.keys()))
@@ -234,24 +236,20 @@ st.divider()
 conflicts = []
 
 if "POV" in relation_choice:
-    conflicts.append("👀 **視角衝突**：選擇了「第一人稱視角 (POV)」，代表畫面由主角眼睛看出去，通常會**看不到主角本人**（除非照鏡子）。請確認是否符合需求。")
+    conflicts.append("👀 **視角衝突**：選擇了「第一人稱視角 (POV)」，代表畫面由主角眼睛看出去，通常會**看不到主角本人**。")
 
 face_keywords = ["笑", "看", "眼", "嘴", "表情", "臉", "盯"]
 if "Back View" in relation_choice and any(word in user_action for word in face_keywords):
-    conflicts.append("👤 **面向衝突**：選擇了「背後視角」，但動作中包含了「臉部表情/視線」。AI 預設背影無法看到臉，可能會畫出詭異扭曲的畫面。")
+    conflicts.append("👤 **面向衝突**：選擇了「背後視角」，但動作中包含了「臉部表情/視線」。可能會畫出詭異扭曲的畫面。")
 
 if shot_choice == "極特寫" and "Over the shoulder" in relation_choice:
-    conflicts.append("📷 **鏡頭衝突**：「極特寫」視野極小，無法容納「過肩鏡頭」所需要的肩膀前景。建議鏡頭大小改為「半身」或「特寫」。")
+    conflicts.append("📷 **鏡頭衝突**：「極特寫」視野極小，無法容納「過肩鏡頭」所需要的肩膀前景。")
 
 bg_lower = user_background.lower()
 night_keywords = ["夜", "night", "晚", "星空"]
 if light_choice == "白天自然光" and not is_remake_mode and not use_light_ref:
     if any(word in bg_lower for word in night_keywords):
-        conflicts.append("🌞🌛 **光影衝突**：光線選擇了「白天自然光」，但背景描述包含「夜晚」。AI 會產生混淆，建議統一時間設定。")
-
-# ⭐ 側邊鏡頭與偏移衝突檢測 (避免使用者選了側面又選偏移造成AI混淆)
-if "Side View" in relation_choice and dict_offset[offset_choice] != "":
-    conflicts.append("🧭 **偏移衝突**：您已經選擇了「側面視角」，不建議再疊加「左右水平偏移」，這會讓 AI 無法判斷到底要在哪一側。建議偏移選「正中」。")
+        conflicts.append("🌞🌛 **光影衝突**：光線選擇了「白天自然光」，但背景描述包含「夜晚」。建議統一時間設定。")
 
 if conflicts:
     st.error("🚨 **提示詞衝突警告 (請檢視下方問題，以免生成失敗)：**")
@@ -270,7 +268,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             custom_neg_tags = ", ".join(word_list)
         final_negative_prompt = f"{custom_neg_tags}, {base_negative}" if custom_neg_tags else base_negative
         
-        # ⭐ 組合鏡頭位置 (前後 + 左右偏移)
+        # [組合鏡頭位置]
         final_camera_position = dict_relation[relation_choice]
         if dict_offset[offset_choice] != "":
             final_camera_position += f", {dict_offset[offset_choice]}"
@@ -285,7 +283,8 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
-            base_prompt += f", changing camera view to: {dict_shot[shot_choice]}, {dict_angle[angle_choice]}, {final_camera_position}"
+            # ⭐ 改變動詞為 moving camera view to
+            base_prompt += f", moving camera view to: {dict_shot[shot_choice]}, {dict_angle[angle_choice]}, {final_camera_position}"
             
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
             
