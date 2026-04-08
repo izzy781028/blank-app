@@ -42,12 +42,20 @@ dict_angle = {
     "俯視 (High Angle - 攝影機在上)": "high angle shot, shot from above", 
     "傾斜荷蘭角 (Dutch Angle)": "dutch angle, tilted frame"
 }
+
 dict_relation = {
     "正前方拍攝 (Front View)": "front view, shot from front",
     "側面/旁觀視角 (Side View)": "profile, side view, shot from side", 
     "背後視角 (Back View)": "shot from behind, back view",
     "過肩鏡頭 (Over the shoulder)": "over the shoulder shot, OTS", 
     "第一人稱視角 (POV)": "first-person view, POV, seeing through eyes"
+}
+
+# ⭐ 新增：攝影機的水平左右偏移字典
+dict_offset = {
+    "正中 (無偏移)": "",
+    "偏左 45 度 (從左側拍)": "shot from the left side, angled from left",
+    "偏右 45 度 (從右側拍)": "shot from the right side, angled from right"
 }
 
 dict_light = {
@@ -96,7 +104,6 @@ with col_text1:
         help="重構模式下，將強制繼承參考圖主角。" if is_remake_mode else ""
     )
 with col_text2:
-    # ⭐ 更新預設動作提示文字
     user_action = st.text_input(
         "🏃‍♂️ 主角動作 (Doing What)", 
         value="" if is_remake_mode else "看向窗外，手裡拿著咖啡", 
@@ -114,13 +121,11 @@ st.divider()
 # --- 【第二區：參考圖數量對應與連動】 ---
 st.subheader("2. 參考圖片參數設定 (自動計算 Image 編號)")
 
-# ⭐ 動態提醒文字
 if is_remake_mode:
     st.warning("⚠️ **重構模式重要提醒：** 上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有)**。")
 else:
     st.warning("⚠️ **重要提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
 
-# ⭐ 智慧計數器：如果是重構模式，因為 Image 1 是主圖，所以後面的參考圖從 Image 2 開始數
 img_counter = 2 if is_remake_mode else 1 
 ref_prompts = [] 
 custom_light_prompt = ""
@@ -156,7 +161,6 @@ with col_ref2:
         ref_prompts.append(f"referencing object {joined_obj_labels}{attr_str}")
 
 with col_ref3:
-    # ⭐ 如果是重構模式，鎖定(隱藏/反灰)光線參考圖功能，因為主圖 [Image 1] 已經包含了光線
     if is_remake_mode:
         st.checkbox("💡 光線與色調參考圖 (重構模式已鎖定)", value=False, disabled=True, help="重構模式下，光線由主參考圖 [Image 1] 決定。")
     else:
@@ -183,7 +187,8 @@ st.divider()
 
 # --- 【第三區：攝影與風格控制】 ---
 st.subheader("3. 攝影與風格控制")
-col1, col2, col3 = st.columns(3)
+# ⭐ 為了排版美觀，把這區改成 4 個 column
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     style_choice = st.selectbox(
@@ -204,9 +209,13 @@ with col2:
     angle_choice = st.selectbox("📐 鏡頭角度", list(dict_angle.keys()))
 
 with col3:
-    relation_choice = st.selectbox("👁️ 鏡頭相對位置", list(dict_relation.keys()))
+    relation_choice = st.selectbox("👁️ 鏡頭前後位置", list(dict_relation.keys()))
+    # ⭐ 新增的左右偏移選單
+    offset_choice = st.selectbox("🧭 鏡頭水平偏移", list(dict_offset.keys()), help="可與前後位置組合，例如：背後視角 + 偏左 = 從左後方拍。")
+
+with col4:
     ratio_choice = st.selectbox("📏 畫面比例", list(dict_ratio.keys()))
-    append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾 (例如: 16:9 aspect ratio)", value=False)
+    append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾", value=False)
 
 st.divider()
 
@@ -240,6 +249,10 @@ if light_choice == "白天自然光" and not is_remake_mode and not use_light_re
     if any(word in bg_lower for word in night_keywords):
         conflicts.append("🌞🌛 **光影衝突**：光線選擇了「白天自然光」，但背景描述包含「夜晚」。AI 會產生混淆，建議統一時間設定。")
 
+# ⭐ 側邊鏡頭與偏移衝突檢測 (避免使用者選了側面又選偏移造成AI混淆)
+if "Side View" in relation_choice and dict_offset[offset_choice] != "":
+    conflicts.append("🧭 **偏移衝突**：您已經選擇了「側面視角」，不建議再疊加「左右水平偏移」，這會讓 AI 無法判斷到底要在哪一側。建議偏移選「正中」。")
+
 if conflicts:
     st.error("🚨 **提示詞衝突警告 (請檢視下方問題，以免生成失敗)：**")
     for msg in conflicts:
@@ -256,6 +269,11 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             word_list = [word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
         final_negative_prompt = f"{custom_neg_tags}, {base_negative}" if custom_neg_tags else base_negative
+        
+        # ⭐ 組合鏡頭位置 (前後 + 左右偏移)
+        final_camera_position = dict_relation[relation_choice]
+        if dict_offset[offset_choice] != "":
+            final_camera_position += f", {dict_offset[offset_choice]}"
 
         # [處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
@@ -267,9 +285,8 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
-            base_prompt += f", changing camera view to: {dict_shot[shot_choice]}, {dict_angle[angle_choice]}, {dict_relation[relation_choice]}"
+            base_prompt += f", changing camera view to: {dict_shot[shot_choice]}, {dict_angle[angle_choice]}, {final_camera_position}"
             
-            # ⭐ 重構模式下若有追加人物/物件參考圖，接在後方
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
             
         else:
@@ -283,7 +300,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
                 f"in {user_background}, "
                 f"{dict_shot[shot_choice]}, "
                 f"{dict_angle[angle_choice]}, "
-                f"{dict_relation[relation_choice]}, "
+                f"{final_camera_position}, "
                 f"{final_style}"
                 f"{final_light}"
             )
