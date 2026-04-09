@@ -11,7 +11,7 @@ custom_css = """
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* ⭐ 替換整體背景為高級暗色漸層 */
+    /* 替換整體背景為高級暗色漸層 */
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #09090b 50%, #1e1b4b 100%);
         background-attachment: fixed;
@@ -64,12 +64,30 @@ custom_css = """
         color: #e5e7eb;
     }
 
-    /* 輸入框與下拉選單的圓角 */
+    /* 輸入框與下拉選單的圓角與預設顏色 */
     .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
         border-radius: 10px !important;
         background-color: rgba(0, 0, 0, 0.2) !important;
         color: #f3f4f6 !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* ⭐ 強化被鎖定 (Disabled) 元件的視覺效果 */
+    [data-testid="stDisabled"] {
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+    }
+    [data-testid="stDisabled"] * {
+        cursor: not-allowed !important;
+    }
+
+    /* ⭐ 強制將被鎖定的輸入框與下拉選單內的文字變成明顯的灰色 */
+    [data-testid="stDisabled"] div[data-baseweb="select"] > div,
+    [data-testid="stDisabled"] div[data-baseweb="select"] span,[data-testid="stDisabled"] .stTextInput input,
+    [data-testid="stDisabled"] .stNumberInput input {
+        color: #6b7280 !important; /* 深灰色 */
+        -webkit-text-fill-color: #6b7280 !important; /* 確保瀏覽器強制覆寫顏色 */
+        background-color: rgba(0, 0, 0, 0.4) !important; /* 背景變得更暗 */
     }
 
     /* 主要按鈕美化 (漸層 + 動畫) */
@@ -135,7 +153,6 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
-base_quality = "highres, ultra-detailed, 8k resolution"
 base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
 dict_style = {
@@ -225,7 +242,7 @@ if is_normal_mode:
 elif is_remake_mode:
     st.info("**畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
 elif is_layout_mode:
-    st.info("**分鏡保留模式**：鎖定參考圖 [Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
+    st.info("**分鏡保留模式**：鎖定參考圖[Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
 
 
 # --- 【第一區：核心內容】 ---
@@ -234,15 +251,16 @@ col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
     if is_remake_mode:
-        subj_val = "同參考圖主角"
+        subj_label = "畫面主角 (Who) 🔒 [重構模式已鎖定]"
+        subj_val = "同主參考圖主角"
         subj_disabled = True
-        subj_help = "重構模式將強制繼承主角"
     else:
+        subj_label = "畫面主角 (Who)"
         subj_val = "" if is_layout_mode else "一位穿白襯衫的年輕台灣女性"
         subj_disabled = False
-        subj_help = "若留白，將維持參考圖原本的主角" if is_layout_mode else "*必填"
-
-    user_keyword = st.text_input("畫面主角 (Who)", value=subj_val, disabled=subj_disabled, help=subj_help, placeholder="例如: 一位台灣男性")
+        
+    subj_help = "若留白，將維持參考圖原本的主角" if is_layout_mode else "*必填"
+    user_keyword = st.text_input(subj_label, value=subj_val, disabled=subj_disabled, help=subj_help, placeholder="例如: 一位台灣男性")
 
 with col_text2:
     act_help = "若留白，將維持原動作與姿勢" if (is_remake_mode or is_layout_mode) else "(可在此定義面向與表情) 非必填"
@@ -270,7 +288,7 @@ st.info(
 )
 
 if is_normal_mode:
-    st.warning("**排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則[Image X] 的編號會對不起來！")
+    st.warning("**排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
 else:
     st.warning("**排序提醒：** 模式已鎖定第一張為主圖。上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有) ➔ 光線(若有)**。")
 
@@ -317,7 +335,7 @@ with col_ref2:
 
 with col_ref3:
     if is_remake_mode:
-        st.checkbox("光線與色調參考圖 (重構模式已鎖定)", value=False, disabled=True, help="重構模式下，光影強制由主參考圖 [Image 1] 決定。")
+        st.checkbox("光線與色調參考圖 🔒 [重構模式已鎖定]", value=False, disabled=True)
     else:
         use_light_ref = st.checkbox("啟用光線與色調參考圖", help="若使用「真實照片」作為光線參考，生成的逼真度與質感效果會最佳！")
         if use_light_ref:
@@ -346,24 +364,30 @@ col1, col2, col3 = st.columns(3)
 camera_disabled = is_layout_mode
 
 with col1:
+    style_label = "視覺風格 🔒 [由參考圖決定]" if (is_remake_mode or is_also_style_ref) else "視覺風格"
     style_choice = st.selectbox(
-        "視覺風格", 
+        style_label, 
         ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
-        disabled=is_remake_mode or is_also_style_ref,
-        help="重構模式下由參考圖決定。" if is_remake_mode else ""
+        disabled=is_remake_mode or is_also_style_ref
     )
+    
+    light_label = "光線與色調 🔒 [由參考圖決定]" if (use_light_ref or is_remake_mode) else "光線與色調"
     light_choice = st.selectbox(
-        "光線與色調",["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
-        disabled=use_light_ref or is_remake_mode, 
-        help="重構模式或已使用參考圖時將失效。" if (use_light_ref or is_remake_mode) else ""
+        light_label,
+        ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
+        disabled=use_light_ref or is_remake_mode
     )
 
 with col2:
-    shot_choice = st.selectbox("鏡頭大小", list(dict_shot.keys()), disabled=camera_disabled, help="分鏡保留模式下將鎖定為原圖視角" if camera_disabled else "")
-    angle_choice = st.selectbox("鏡頭角度", list(dict_angle.keys()), disabled=camera_disabled)
+    shot_label = "鏡頭大小 🔒 [分鏡已鎖定]" if camera_disabled else "鏡頭大小"
+    shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled)
+    
+    angle_label = "鏡頭角度 🔒 [分鏡已鎖定]" if camera_disabled else "鏡頭角度"
+    angle_choice = st.selectbox(angle_label, list(dict_angle.keys()), disabled=camera_disabled)
 
 with col3:
-    position_choice = st.selectbox("鏡頭位置", list(dict_position.keys()), disabled=camera_disabled)
+    pos_label = "鏡頭位置 🔒[分鏡已鎖定]" if camera_disabled else "鏡頭位置"
+    position_choice = st.selectbox(pos_label, list(dict_position.keys()), disabled=camera_disabled)
     
     if not camera_disabled:
         st.markdown("**鏡頭位置示意圖：**")
@@ -427,12 +451,12 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             custom_neg_tags = ", ".join(word_list)
 
         if is_remake_mode:
-            base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
+            base_prompt = "maintaining the exact subject, visual style, color grading and lighting of[Image 1]"
             
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
                 
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
@@ -481,8 +505,6 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
                 f"{final_light}"
             )
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
-
-        final_prompt += f", {base_quality}"
 
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
