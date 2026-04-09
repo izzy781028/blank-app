@@ -1,7 +1,101 @@
 import streamlit as st
 
-# ==================== 1. 網頁基本設定 ====================
-st.set_page_config(layout="wide", page_title="AI 圖片提示詞生成器")
+# ==================== 1. 網頁基本設定與全域 CSS 美化 ====================
+st.set_page_config(layout="wide", page_title="AI 圖片提示詞生成器", page_icon="🍌")
+
+# ⭐ 注入自定義 CSS 美化介面
+custom_css = """
+<style>
+    /* 隱藏預設的選單與底部浮水印，看起來更像獨立 App */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* 漸層大標題 */
+    .main-title {
+        background: linear-gradient(135deg, #4F46E5 0%, #EC4899 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 3rem !important;
+        font-weight: 900 !important;
+        margin-bottom: 0px !important;
+        padding-bottom: 10px;
+    }
+    
+    /* 副標題與敘述小字 */
+    .sub-title {
+        font-size: 1.1rem;
+        color: #6B7280;
+        margin-bottom: 2rem;
+        font-weight: 500;
+    }
+
+    /* 區塊標題 (帶有左側色塊裝飾) */
+    .section-header {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        padding-left: 12px;
+        border-left: 6px solid #4F46E5;
+        letter-spacing: 0.5px;
+    }
+
+    /* 所有 Alert 框 (Info, Warning, Error) 增加大圓角 */
+    [data-testid="stAlert"] {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+
+    /* 輸入框與下拉選單的圓角 */
+    .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
+        border-radius: 10px !important;
+    }
+
+    /* ⭐ 主要按鈕美化 (漸層 + 動畫) */
+    div.stButton > button:first-child {
+        background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    div.stButton > button:first-child:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
+    }
+    
+    /* 模式選擇 (Radio Button) 加上背景框使其像開關 */
+    div.row-widget.stRadio > div {
+        background-color: rgba(128, 128, 128, 0.05);
+        padding: 15px 20px;
+        border-radius: 16px;
+    }
+
+    /* 雷達圖卡片美化 */
+    .radar-card {
+        background: linear-gradient(145deg, rgba(79,70,229,0.05) 0%, rgba(236,72,153,0.05) 100%);
+        border: 1px solid rgba(128,128,128,0.1);
+        padding: 15px; 
+        border-radius: 16px; 
+        text-align: center; 
+        font-size: 22px; 
+        line-height: 1.6; 
+        letter-spacing: 4px; 
+        margin-bottom: 5px;
+        box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
+    }
+</style>
+"""
+st.markdown(custom_css, unsafe_allow_html=True)
 
 # ==================== 2. 簡易密碼鎖設定 ====================
 TEAM_PASSWORD = "52654260" 
@@ -10,8 +104,9 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-    st.title("🔒 內部測試工具：請輸入通關密碼")
-    pwd_input = st.text_input("輸入密碼後按 Enter", type="password")
+    st.markdown("<h1 class='main-title'>🔒 登入以繼續</h1>", unsafe_allow_html=True)
+    st.markdown("<p class='sub-title'>請輸入團隊專屬的通關密碼</p>", unsafe_allow_html=True)
+    pwd_input = st.text_input("密碼", type="password", label_visibility="collapsed", placeholder="輸入密碼後按 Enter")
     if pwd_input == TEAM_PASSWORD:
         st.session_state.authenticated = True
         st.rerun()
@@ -20,6 +115,9 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
+base_quality = "highres, ultra-detailed, 8k resolution"
+base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
+
 dict_style = {
     "寫實商業攝影": "clean commercial photography, natural high-end realism, soft cinematic realism, muted saturation, balanced dynamic range, smooth highlight roll-off, gentle tonal separation, delicate midtone detail, subtle film grain, organic tonal response, crisp but not overly sharpened, refined texture clarity, smooth tonal gradation", 
     "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
@@ -87,11 +185,11 @@ dict_ratio = {
 
 # ==================== 4. UI 介面設計 ====================
 
-st.title("🚀 AI 圖片提示詞生成器")
-st.write("精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。")
+st.markdown("<h1 class='main-title'>🍌 AI 圖片提示詞生成器</h1>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 (Stable Diffusion) 引擎打造。</p>", unsafe_allow_html=True)
 
 # --- 【全新模式切換器】 ---
-st.markdown("### ⚙️ 請選擇產圖模式")
+st.markdown("<div class='section-header'>⚙️ 選擇產圖模式</div>", unsafe_allow_html=True)
 mode = st.radio(
     "模式選擇",
     ["✨ 一般生成模式 (從零開始)", "🔮 畫面重構模式 (換動作/換視角)", "📸 分鏡保留模式 (換人/換場景)"],
@@ -110,10 +208,9 @@ elif is_remake_mode:
 elif is_layout_mode:
     st.info("🖼️ **分鏡保留模式**：鎖定參考圖 [Image 1] 的「所有攝影機位置與構圖」。您可以將畫面的主角、動作、背景或光線換掉。")
 
-st.markdown("---")
 
 # --- 【第一區：核心內容】 ---
-st.subheader("1. 畫面核心內容 (Who, Doing What, Where)")
+st.markdown("<div class='section-header'>1. 畫面核心內容 (Who, Doing What, Where)</div>", unsafe_allow_html=True)
 col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
@@ -142,10 +239,9 @@ with col_text3:
     bg_value = "" if (is_remake_mode or is_layout_mode) else "陽光明媚的現代咖啡廳"
     user_background = st.text_input("🖼️ 背景場景 (Where)", value=bg_value, placeholder="例如: 夜晚的東京街頭", help=bg_help)
 
-st.divider()
 
 # --- 【第二區：參考圖數量對應與連動】 ---
-st.subheader("2. 參考圖片參數設定 (自動計算 Image 編號)")
+st.markdown("<div class='section-header'>2. 參考圖片參數設定</div>", unsafe_allow_html=True)
 
 st.info(
     "📸 **【最佳參考圖規範】** 為了獲得最好的 AI 生成效果，請確保上傳的圖片符合以下條件：\n"
@@ -171,27 +267,20 @@ with col_ref1:
     use_char_ref = st.checkbox("👤 啟用人物參考圖")
     if use_char_ref:
         char_count = st.number_input("輸入人物參考圖數量", min_value=1, max_value=10, value=1, step=1)
-        
-        # ⭐ 更新選單，加入眼鏡、帽子
         char_parts = st.multiselect("請選擇要參考的部位 (可複選)", ["臉部特徵 (Face)", "服裝穿搭 (Clothing)", "眼鏡 (Glasses)", "帽子 (Hat)"])
-        
-        # ⭐ 新增自定義部位輸入框
         custom_parts = st.text_input("✍️ 自定義參考部位 (選填)", placeholder="例如: 手錶 項鍊 (請用空白鍵隔開)", help="將會自動轉成英文標籤")
         
         char_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + char_count)]
         img_counter += char_count 
         
-        # 整理選擇的部位
         parts_map = {"臉部特徵 (Face)": "face", "服裝穿搭 (Clothing)": "clothing", "眼鏡 (Glasses)": "glasses", "帽子 (Hat)": "hat"}
         selected_parts = [parts_map[p] for p in char_parts]
         
-        # 整理自定義的部位
         if custom_parts.strip() != "":
             custom_list = [word.strip() for word in custom_parts.replace(',', ' ').split() if word.strip()]
             selected_parts.extend(custom_list)
             
         parts_str = f" for {' and '.join(selected_parts)}" if selected_parts else ""
-        
         joined_char_labels = " and ".join(char_labels)
         ref_prompts.append(f"referencing character details from {joined_char_labels}{parts_str}")
 
@@ -230,10 +319,9 @@ with col_ref3:
             else:
                 custom_light_prompt = f"matching the exact lighting, color grading, and texture of {joined_light_labels}"
 
-st.divider()
 
 # --- 【第三區：攝影與風格控制】 ---
-st.subheader("3. 攝影與風格控制")
+st.markdown("<div class='section-header'>3. 攝影與風格控制</div>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
 
 camera_disabled = is_layout_mode
@@ -260,28 +348,24 @@ with col3:
     position_choice = st.selectbox("👁️ 鏡頭位置", list(dict_position.keys()), disabled=camera_disabled)
     
     if not camera_disabled:
-        st.markdown("**鏡頭位置示意圖：**")
+        st.markdown("**🧭 鏡頭位置示意圖**")
         radar_html = dict_position_map[position_choice]
-        st.markdown(f"""
-            <div style='background-color: rgba(128,128,128,0.1); padding: 15px; border-radius: 8px; text-align: center; font-size: 22px; line-height: 1.5; letter-spacing: 2px; margin-bottom: 5px;'>
-                {radar_html}
-            </div>
-        """, unsafe_allow_html=True)
+        # ⭐ 套用新寫好的 CSS 類別 radar-card
+        st.markdown(f"<div class='radar-card'>{radar_html}</div>", unsafe_allow_html=True)
         st.caption("*( 👤 人像下方為正前方 )*")
     
     ratio_choice = st.selectbox("📏 畫面比例", list(dict_ratio.keys()))
     append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾", value=False)
 
-st.divider()
 
 # --- 【第四區：負面提示詞】 ---
-st.subheader("4. 負面提示詞 (Negative Prompt) - 選填")
+st.markdown("<div class='section-header'>4. 負面提示詞 (Negative Prompt) - 選填</div>", unsafe_allow_html=True)
 user_negative = st.text_input(
     "🚫 想要排除的額外元素 (請用「空白鍵」隔開不同的詞)", 
     placeholder="例如: text logo watermark ugly trees"
 )
 
-st.divider()
+st.markdown("<br>", unsafe_allow_html=True)
 
 # ==================== 5. 產圖邏輯區與衝突檢測 ====================
 
@@ -311,7 +395,7 @@ if conflicts:
     for msg in conflicts:
         st.warning(msg)
 
-if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_container_width=True):
+if st.button("🪄 組合生成咒語 (Generate Prompt)", type="primary", use_container_width=True):
     
     if is_normal_mode and (user_keyword.strip() == "" or user_background.strip() == ""):
         st.error("⚠️ 一般模式下，請確實填寫「畫面主角」與「背景場景」！")
@@ -377,10 +461,12 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             )
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
+        final_prompt += f", {base_quality}"
+
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
 
-        st.success("✅ 成功生成提示詞！請點擊右上方按鈕一鍵複製。")
+        st.success("✅ 成功生成提示詞！")
         st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵全選複製**")
         
         if custom_neg_tags:
@@ -390,4 +476,4 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             
         st.code(combined_output, language="text")
         
-        st.info(f"💡 【尺寸參數建議】： 寬度 {1920 if '16:9' in ratio_choice else (1080 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1440 if '4:3' in ratio_choice else (1080 if '3:4' in ratio_choice else 2560))))}px, 高度 {1080 if '16:9' in ratio_choice else (1920 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1080 if '4:3' in ratio_choice else (1440 if '3:4' in ratio_choice else 1080))))}px")
+        st.info(f"💡 **【尺寸參數設定建議】** 寬度：`{1920 if '16:9' in ratio_choice else (1080 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1440 if '4:3' in ratio_choice else (1080 if '3:4' in ratio_choice else 2560))))}`px ｜ 高度：`{1080 if '16:9' in ratio_choice else (1920 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1080 if '4:3' in ratio_choice else (1440 if '3:4' in ratio_choice else 1080))))}`px")
