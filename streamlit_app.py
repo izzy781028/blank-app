@@ -20,7 +20,6 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
-# ⭐ 把純淨版的畫質詞加回來
 base_quality = "highres, ultra-detailed, 8k resolution"
 base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
@@ -261,11 +260,18 @@ if ("後方" in position_choice) and any(word in user_action for word in face_ke
 if shot_choice == "極特寫" and "過肩鏡頭" in position_choice:
     conflicts.append("📷 **鏡頭衝突**：「極特寫」視野極小，無法容納「過肩鏡頭」所需要的肩膀前景。")
 
+# ⭐ 光影衝突檢測優化 (包含日夜交叉檢測)
 bg_lower = user_background.lower()
 night_keywords = ["夜", "night", "晚", "星空"]
-if light_choice == "白天自然光" and not is_remake_mode and not use_light_ref:
-    if any(word in bg_lower for word in night_keywords):
-        conflicts.append("🌞🌛 **光影衝突**：光線選擇了「白天自然光」，但背景描述包含「夜晚」。建議統一時間設定。")
+day_keywords = ["白", "日", "早", "陽光", "sun", "day", "morning", "afternoon"]
+
+if not is_remake_mode and not use_light_ref:
+    # 狀況A：選了白天光線，但打了夜晚場景
+    if light_choice == "白天自然光" and any(word in bg_lower for word in night_keywords):
+        conflicts.append("🌞🌛 **光影衝突**：光線選擇了「白天自然光」，但背景描述包含「夜晚」。AI 會產生混淆，建議統一時間設定。")
+    # ⭐ 狀況B：選了夜晚光線，但打了白天場景
+    elif light_choice == "夜晚" and any(word in bg_lower for word in day_keywords):
+        conflicts.append("🌛🌞 **光影衝突**：光線選擇了「夜晚」，但背景描述包含「白天/陽光」。AI 會產生混淆，建議統一時間設定。")
 
 if conflicts:
     st.error("🚨 **提示詞衝突警告 (請檢視下方問題，以免生成失敗)：**")
@@ -312,7 +318,6 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
-        # ⭐ 把精簡版的 base_quality 補回提示詞的最後面
         final_prompt += f", {base_quality}"
 
         if append_ratio:
