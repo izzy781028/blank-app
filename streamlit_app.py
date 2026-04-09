@@ -20,11 +20,12 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
-base_quality = "masterpiece, best quality, highres, ultra-detailed, 8k resolution"
+# ⭐ 已移除 base_quality
 base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
+# ⭐ 更新「寫實商業攝影」的專業光影與質感提示詞
 dict_style = {
-    "寫實商業攝影": "realistic, photorealistic, RAW photo, commercial photography, sharp focus", 
+    "寫實商業攝影": "clean commercial photography, natural high-end realism, soft cinematic realism, muted saturation, soft contrast, balanced dynamic range, smooth highlight roll-off, gentle tonal separation, delicate midtone detail, subtle film grain, organic tonal response, crisp but not overly sharpened, refined texture clarity, smooth tonal gradation, airy brightness", 
     "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
     "科技未來感": "cyberpunk, sci-fi, futuristic, glowing neon lights, intricate mechanical details", 
     "溫暖生活感": "warm lifestyle, slice of life, cozy atmosphere, candid photography", 
@@ -35,16 +36,7 @@ dict_style = {
     "3D 視覺風": "3D render, octane render, unreal engine 5, path tracing, volumetric lighting"
 }
 
-# ⭐ 新增「超大遠景」，並加上 establishing shot (建立鏡頭) 和 tiny subject (渺小主體) 確保畫面夠寬闊
-dict_shot = {
-    "極特寫": "extreme close-up", 
-    "特寫": "close-up", 
-    "半身": "medium shot, waist up", 
-    "膝上景": "cowboy shot", 
-    "全身景": "full body", 
-    "遠景": "wide shot, wide angle",
-    "超大遠景": "extreme wide shot, extreme long shot, establishing shot, tiny subject"
-}
+dict_shot = {"極特寫": "extreme close-up", "特寫": "close-up", "半身": "medium shot, waist up", "膝上景": "cowboy shot", "全身景": "full body", "遠景": "wide shot, wide angle", "超大遠景": "extreme wide shot, extreme long shot, establishing shot, tiny subject"}
 
 dict_angle = {
     "平視 (Eye Level)": "eye-level angle, straight-on", 
@@ -320,7 +312,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
-        final_prompt += f", {base_quality}"
+        # ⭐ 不再加入 base_quality
 
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
