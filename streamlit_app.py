@@ -6,14 +6,26 @@ st.set_page_config(layout="wide", page_title="AI 圖片提示詞生成器")
 # 注入自定義 CSS 美化介面
 custom_css = """
 <style>
-    /* 隱藏預設的選單與底部浮水印，看起來更像獨立 App */
+    /* 隱藏預設的選單與底部浮水印 */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
+    /* ⭐ 替換整體背景為高級暗色漸層 */
+    .stApp {
+        background: linear-gradient(135deg, #0f172a 0%, #09090b 50%, #1e1b4b 100%);
+        background-attachment: fixed;
+        color: #f8fafc;
+    }
+
+    /* 確保原本預設的白色/黑色底色透明化，讓漸層透出來 */
+    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background-color: transparent !important;
+    }
+    
     /* 漸層大標題 */
     .main-title {
-        background: linear-gradient(135deg, #4F46E5 0%, #EC4899 100%);
+        background: linear-gradient(135deg, #818cf8 0%, #f472b6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-size: 3rem !important;
@@ -25,7 +37,7 @@ custom_css = """
     /* 副標題與敘述小字 */
     .sub-title {
         font-size: 1.1rem;
-        color: #6B7280;
+        color: #9ca3af;
         margin-bottom: 2rem;
         font-weight: 500;
     }
@@ -34,7 +46,7 @@ custom_css = """
     .section-header {
         font-size: 1.4rem;
         font-weight: 700;
-        color: var(--text-color);
+        color: #f3f4f6;
         margin-top: 2.5rem;
         margin-bottom: 1rem;
         padding-left: 12px;
@@ -42,16 +54,22 @@ custom_css = """
         letter-spacing: 0.5px;
     }
 
-    /* 所有 Alert 框 (Info, Warning, Error) 增加大圓角 */
+    /* 所有 Alert 框 (Info, Warning, Error) 增加大圓角與微透明 */
     [data-testid="stAlert"] {
         border-radius: 12px;
         border: none;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        color: #e5e7eb;
     }
 
     /* 輸入框與下拉選單的圓角 */
     .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
         border-radius: 10px !important;
+        background-color: rgba(0, 0, 0, 0.2) !important;
+        color: #f3f4f6 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
     /* 主要按鈕美化 (漸層 + 動畫) */
@@ -75,15 +93,16 @@ custom_css = """
     
     /* 模式選擇 (Radio Button) 加上背景框使其像開關 */
     div.row-widget.stRadio > div {
-        background-color: rgba(128, 128, 128, 0.05);
+        background-color: rgba(255, 255, 255, 0.03);
         padding: 15px 20px;
         border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     /* 雷達圖卡片美化 */
     .radar-card {
-        background: linear-gradient(145deg, rgba(79,70,229,0.05) 0%, rgba(236,72,153,0.05) 100%);
-        border: 1px solid rgba(128,128,128,0.1);
+        background: linear-gradient(145deg, rgba(79,70,229,0.1) 0%, rgba(236,72,153,0.05) 100%);
+        border: 1px solid rgba(255,255,255,0.05);
         padding: 15px; 
         border-radius: 16px; 
         text-align: center; 
@@ -91,7 +110,8 @@ custom_css = """
         line-height: 1.6; 
         letter-spacing: 4px; 
         margin-bottom: 5px;
-        box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        backdrop-filter: blur(5px);
     }
 </style>
 """
@@ -250,7 +270,7 @@ st.info(
 )
 
 if is_normal_mode:
-    st.warning("**排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
+    st.warning("**排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則[Image X] 的編號會對不起來！")
 else:
     st.warning("**排序提醒：** 模式已鎖定第一張為主圖。上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有) ➔ 光線(若有)**。")
 
@@ -349,7 +369,7 @@ with col3:
         st.markdown("**鏡頭位置示意圖：**")
         radar_html = dict_position_map[position_choice]
         st.markdown(f"""
-            <div style='background-color: rgba(128,128,128,0.1); padding: 15px; border-radius: 8px; text-align: center; font-size: 22px; line-height: 1.5; letter-spacing: 2px; margin-bottom: 5px;'>
+            <div class='radar-card'>
                 {radar_html}
             </div>
         """, unsafe_allow_html=True)
@@ -407,7 +427,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             custom_neg_tags = ", ".join(word_list)
 
         if is_remake_mode:
-            base_prompt = "maintaining the exact subject, visual style, color grading and lighting of[Image 1]"
+            base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
@@ -426,7 +446,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             if user_keyword.strip():
                 base_prompt += f", changing subject to: {user_keyword.strip()}"
             else:
-                base_prompt += ", maintaining the exact subject of [Image 1]"
+                base_prompt += ", maintaining the exact subject of[Image 1]"
                 
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
