@@ -93,52 +93,73 @@ dict_ratio = {
 st.title("🚀 AI 圖片提示詞生成器")
 st.write("精準控制畫面分鏡，專為 Nano Banana 2 (Stable Diffusion) 引擎打造。")
 
-# --- 【畫面重構模式開關】 ---
-st.markdown("---")
-col_mode1, col_mode2 = st.columns([1, 3])
-with col_mode1:
-    is_remake_mode = st.toggle("🔮 開啟「畫面重構」模式", value=False)
-with col_mode2:
-    if is_remake_mode:
-        st.info("🔄 **目前為畫面重構模式**：系統將繼承上傳之 [Image 1] 的外貌、風格與光影。您可以選擇性修改動作、場景、鏡頭，或加上額外的人物/物件參考圖。")
-    else:
-        st.caption("💡 若需基於一張現有參考圖來改變動作與鏡頭，請開啟此模式。")
+# ⭐ --- 【全新模式切換器】 ---
+st.markdown("### ⚙️ 請選擇產圖模式")
+mode = st.radio(
+    "模式選擇",
+    ["✨ 一般生成模式 (從零開始)", "🔮 畫面重構模式 (換動作/換視角)", "📸 分鏡保留模式 (換人/換場景)"],
+    horizontal=True,
+    label_visibility="collapsed"
+)
+
+# 依據模式設定布林值
+is_remake_mode = mode == "🔮 畫面重構模式 (換動作/換視角)"
+is_layout_mode = mode == "📸 分鏡保留模式 (換人/換場景)"
+is_normal_mode = mode == "✨ 一般生成模式 (從零開始)"
+
+# 顯示模式說明
+if is_normal_mode:
+    st.info("💡 **一般生成模式**：不需參考圖，直接透過文字指令生成全新的畫面。")
+elif is_remake_mode:
+    st.info("🔄 **畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改「動作、場景」，並強制更改「鏡頭視角」。")
+elif is_layout_mode:
+    st.info("🖼️ **分鏡保留模式**：鎖定參考圖 [Image 1] 的「所有攝影機位置與構圖」。您可以將畫面的主角、服裝、背景或光線換掉。")
+
 st.markdown("---")
 
 # --- 【第一區：核心內容】 ---
 st.subheader("1. 畫面核心內容 (Who, Doing What, Where)")
 col_text1, col_text2, col_text3 = st.columns(3)
+
 with col_text1:
-    user_keyword = st.text_input(
-        "📦 畫面主角 (Who) *必填", 
-        value="同參考圖主角" if is_remake_mode else "一位穿白襯衫的年輕台灣女性",
-        disabled=is_remake_mode,
-        help="重構模式下，將強制繼承參考圖主角。" if is_remake_mode else ""
-    )
+    # 邏輯判斷
+    if is_remake_mode:
+        subj_val = "同參考圖主角"
+        subj_disabled = True
+        subj_help = "重構模式將強制繼承主角"
+    else:
+        subj_val = "" if is_layout_mode else "一位穿白襯衫的年輕台灣女性"
+        subj_disabled = False
+        subj_help = "若留白，將維持參考圖原本的主角" if is_layout_mode else "*必填"
+
+    user_keyword = st.text_input("📦 畫面主角 (Who)", value=subj_val, disabled=subj_disabled, help=subj_help, placeholder="例如: 一位台灣男性")
+
 with col_text2:
+    act_help = "若留白，將維持原動作" if (is_remake_mode or is_layout_mode) else "(可在此定義面向與表情) 非必填"
     user_action = st.text_input(
         "🏃‍♂️ 主角動作 (Doing What)", 
-        value="" if is_remake_mode else "看向窗外，手裡拿著咖啡，神情放鬆", 
+        value="" if (is_remake_mode or is_layout_mode) else "看向窗外，手裡拿著咖啡，神情放鬆", 
         placeholder="例如：看向窗外，手裡拿著咖啡，燦爛微笑", 
-        help="(可在此定義面向與表情) 非必填。留白代表不更改動作。" if is_remake_mode else "(可在此定義面向與表情) 非必填。"
+        help=act_help
     )
+
 with col_text3:
-    bg_label = "🖼️ 背景場景 (Where)" if is_remake_mode else "🖼️ 背景場景 (Where) *必填"
-    bg_help = "非必填。留白代表不更改背景場景。" if is_remake_mode else ""
-    bg_value = "" if is_remake_mode else "陽光明媚的現代咖啡廳"
-    user_background = st.text_input(bg_label, value=bg_value, help=bg_help)
+    bg_help = "若留白，將維持原場景" if (is_remake_mode or is_layout_mode) else "*必填"
+    bg_value = "" if (is_remake_mode or is_layout_mode) else "陽光明媚的現代咖啡廳"
+    user_background = st.text_input("🖼️ 背景場景 (Where)", value=bg_value, placeholder="例如: 夜晚的東京街頭", help=bg_help)
 
 st.divider()
 
 # --- 【第二區：參考圖數量對應與連動】 ---
 st.subheader("2. 參考圖片參數設定 (自動計算 Image 編號)")
 
-if is_remake_mode:
-    st.warning("⚠️ **重構模式重要提醒：** 上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有)**。")
-else:
+if is_normal_mode:
     st.warning("⚠️ **重要提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
+else:
+    st.warning("⚠️ **參考圖模式提醒：** 上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有)**。")
 
-img_counter = 2 if is_remake_mode else 1 
+# 只要不是一般模式，編號都從 2 開始
+img_counter = 2 if not is_normal_mode else 1 
 ref_prompts = [] 
 custom_light_prompt = ""
 use_light_ref = False
@@ -174,7 +195,7 @@ with col_ref2:
 
 with col_ref3:
     if is_remake_mode:
-        st.checkbox("💡 光線與色調參考圖 (重構模式已鎖定)", value=False, disabled=True, help="重構模式下，光線由主參考圖 [Image 1] 決定。")
+        st.checkbox("💡 光線與色調參考圖 (重構模式已鎖定)", value=False, disabled=True, help="重構模式下，光影強制由主參考圖 [Image 1] 決定。")
     else:
         use_light_ref = st.checkbox("💡 啟用光線與色調參考圖")
         if use_light_ref:
@@ -201,35 +222,41 @@ st.divider()
 st.subheader("3. 攝影與風格控制")
 col1, col2, col3 = st.columns(3)
 
+# ⭐ 如果是分鏡保留模式，攝影機相關選單全部反灰
+camera_disabled = is_layout_mode
+
 with col1:
+    # 決定風格選單是否反灰 (若重構模式 或 有勾選風格參考，或分鏡模式且沒有填寫)
+    # 為了讓分鏡模式有彈性，這裡開放選擇，如果不想改，最後程式邏輯會處理
     style_choice = st.selectbox(
         "✨ 視覺風格", 
-        list(dict_style.keys()), 
+        ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
         disabled=is_remake_mode or is_also_style_ref,
-        help="重構模式或啟用風格參考圖時，此選項將自動失效。" if (is_remake_mode or is_also_style_ref) else ""
+        help="重構模式下由參考圖決定。" if is_remake_mode else ""
     )
     light_choice = st.selectbox(
         "💡 光線與色調", 
-        list(dict_light.keys()), 
+        ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
         disabled=use_light_ref or is_remake_mode, 
-        help="重構模式或啟用光線參考圖時，此選項將自動失效。" if (use_light_ref or is_remake_mode) else ""
+        help="重構模式或已使用參考圖時將失效。" if (use_light_ref or is_remake_mode) else ""
     )
 
 with col2:
-    shot_choice = st.selectbox("🔲 鏡頭大小", list(dict_shot.keys()))
-    angle_choice = st.selectbox("📐 鏡頭角度", list(dict_angle.keys()))
+    shot_choice = st.selectbox("🔲 鏡頭大小", list(dict_shot.keys()), disabled=camera_disabled, help="分鏡保留模式下將鎖定為原圖視角" if camera_disabled else "")
+    angle_choice = st.selectbox("📐 鏡頭角度", list(dict_angle.keys()), disabled=camera_disabled)
 
 with col3:
-    position_choice = st.selectbox("👁️ 鏡頭位置", list(dict_position.keys()))
+    position_choice = st.selectbox("👁️ 鏡頭位置", list(dict_position.keys()), disabled=camera_disabled)
     
-    st.markdown("**鏡頭位置示意圖：**")
-    radar_html = dict_position_map[position_choice]
-    st.markdown(f"""
-        <div style='background-color: rgba(128,128,128,0.1); padding: 15px; border-radius: 8px; text-align: center; font-size: 22px; line-height: 1.5; letter-spacing: 2px; margin-bottom: 5px;'>
-            {radar_html}
-        </div>
-    """, unsafe_allow_html=True)
-    st.caption("*( 👤 人像下方為正前方 )*")
+    if not camera_disabled:
+        st.markdown("**鏡頭位置示意圖：**")
+        radar_html = dict_position_map[position_choice]
+        st.markdown(f"""
+            <div style='background-color: rgba(128,128,128,0.1); padding: 15px; border-radius: 8px; text-align: center; font-size: 22px; line-height: 1.5; letter-spacing: 2px; margin-bottom: 5px;'>
+                {radar_html}
+            </div>
+        """, unsafe_allow_html=True)
+        st.caption("*( 👤 人像下方為正前方 )*")
     
     ratio_choice = st.selectbox("📏 畫面比例", list(dict_ratio.keys()))
     append_ratio = st.checkbox("☑️ 將比例標籤加入提示詞結尾", value=False)
@@ -240,8 +267,7 @@ st.divider()
 st.subheader("4. 負面提示詞 (Negative Prompt) - 選填")
 user_negative = st.text_input(
     "🚫 想要排除的額外元素 (請用「空白鍵」隔開不同的詞)", 
-    placeholder="例如: text logo watermark ugly trees", 
-    help="只要打完單字按空白鍵，系統就會自動幫您轉換成 AI 懂的格式！"
+    placeholder="例如: text logo watermark ugly trees"
 )
 
 st.divider()
@@ -250,28 +276,24 @@ st.divider()
 
 conflicts = []
 
-if "POV" in position_choice:
-    conflicts.append("👀 **視角衝突**：選擇了「第一人稱視角 (POV)」，代表畫面由主角眼睛看出去，通常會**看不到主角本人**。")
+if not camera_disabled:
+    if "POV" in position_choice:
+        conflicts.append("👀 **視角衝突**：選擇了「第一人稱視角 (POV)」，通常會看不到主角本人。")
+    face_keywords = ["笑", "看", "眼", "嘴", "表情", "臉", "盯"]
+    if ("後方" in position_choice) and any(word in user_action for word in face_keywords):
+        conflicts.append("👤 **面向衝突**：背後視角與臉部表情描述衝突。")
+    if shot_choice == "極特寫" and "過肩鏡頭" in position_choice:
+        conflicts.append("📷 **鏡頭衝突**：「極特寫」無法容納「過肩鏡頭」所需的前景。")
 
-face_keywords = ["笑", "看", "眼", "嘴", "表情", "臉", "盯"]
-if ("後方" in position_choice) and any(word in user_action for word in face_keywords):
-    conflicts.append("👤 **面向衝突**：選擇了「後方視角」，但動作中包含了「臉部表情/視線」。可能會畫出詭異扭曲的畫面。")
-
-if shot_choice == "極特寫" and "過肩鏡頭" in position_choice:
-    conflicts.append("📷 **鏡頭衝突**：「極特寫」視野極小，無法容納「過肩鏡頭」所需要的肩膀前景。")
-
-# ⭐ 光影衝突檢測優化 (包含日夜交叉檢測)
 bg_lower = user_background.lower()
 night_keywords = ["夜", "night", "晚", "星空"]
 day_keywords = ["白", "日", "早", "陽光", "sun", "day", "morning", "afternoon"]
 
-if not is_remake_mode and not use_light_ref:
-    # 狀況A：選了白天光線，但打了夜晚場景
+if is_normal_mode and not use_light_ref:
     if light_choice == "白天自然光" and any(word in bg_lower for word in night_keywords):
-        conflicts.append("🌞🌛 **光影衝突**：光線選擇了「白天自然光」，但背景描述包含「夜晚」。AI 會產生混淆，建議統一時間設定。")
-    # ⭐ 狀況B：選了夜晚光線，但打了白天場景
+        conflicts.append("🌞🌛 **光影衝突**：光線選擇白天，但背景描述為夜晚。")
     elif light_choice == "夜晚" and any(word in bg_lower for word in day_keywords):
-        conflicts.append("🌛🌞 **光影衝突**：光線選擇了「夜晚」，但背景描述包含「白天/陽光」。AI 會產生混淆，建議統一時間設定。")
+        conflicts.append("🌛🌞 **光影衝突**：光線選擇夜晚，但背景描述包含白天/陽光。")
 
 if conflicts:
     st.error("🚨 **提示詞衝突警告 (請檢視下方問題，以免生成失敗)：**")
@@ -280,16 +302,19 @@ if conflicts:
 
 if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_container_width=True):
     
-    if not is_remake_mode and (user_keyword.strip() == "" or user_background.strip() == ""):
+    if is_normal_mode and (user_keyword.strip() == "" or user_background.strip() == ""):
         st.error("⚠️ 一般模式下，請確實填寫「畫面主角」與「背景場景」！")
     else:
+        # [處理負面提示詞]
         custom_neg_tags = ""
         if user_negative.strip() != "":
             word_list = [word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
         final_negative_prompt = f"{custom_neg_tags}, {base_negative}" if custom_neg_tags else base_negative
 
+        # [處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
+            # === 1. 畫面重構模式 ===
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             
             if user_action.strip():
@@ -298,10 +323,39 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
             base_prompt += f", moving camera view to: {dict_shot[shot_choice]}, {dict_angle[angle_choice]}, {dict_position[position_choice]}"
-            
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
+
+        elif is_layout_mode:
+            # === 2. 分鏡保留模式 ===
+            # 強制保留鏡頭跟構圖
+            base_prompt = "maintaining the exact camera angle, shot size, and composition of [Image 1]"
             
+            # 主角判斷
+            if user_keyword.strip():
+                base_prompt += f", changing subject to: {user_keyword.strip()}"
+            else:
+                base_prompt += ", maintaining the exact subject of [Image 1]"
+                
+            # 動作與背景
+            if user_action.strip():
+                base_prompt += f", changing action to: {user_action.strip()}"
+            if user_background.strip():
+                base_prompt += f", changing background to: {user_background.strip()}"
+            
+            # 風格判斷
+            if style_choice != "維持原圖風格" and not is_also_style_ref:
+                base_prompt += f", changing style to: {dict_style[style_choice]}"
+            
+            # 光影判斷 (判斷是否有選參考圖，或者下拉選單有改)
+            if use_light_ref:
+                base_prompt += f", {custom_light_prompt}"
+            elif light_choice != "維持原圖光影":
+                base_prompt += f", changing lighting to: {dict_light[light_choice]}"
+
+            final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
+
         else:
+            # === 3. 一般生成模式 ===
             subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
             final_light = custom_light_prompt if use_light_ref else dict_light[light_choice]
             final_style = "" if is_also_style_ref else f"{dict_style[style_choice]}, "
@@ -315,14 +369,15 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
                 f"{final_style}"
                 f"{final_light}"
             )
-            
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
+        # 將 Base Quality (畫質詞) 統一補在最後面
         final_prompt += f", {base_quality}"
 
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
 
+        # ---------------- 顯示結果 ----------------
         st.success("✅ 成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵全選複製**")
         
