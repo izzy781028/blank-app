@@ -18,8 +18,7 @@ custom_css = """
         color: #f8fafc;
     }
 
-    /* 確保原本預設的白色/黑色底色透明化，讓漸層透出來 */
-    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    /* 確保原本預設的白色/黑色底色透明化，讓漸層透出來 */[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: transparent !important;
     }
     
@@ -72,22 +71,20 @@ custom_css = """
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* ⭐ 強化被鎖定 (Disabled) 元件的視覺效果 */
-    [data-testid="stDisabled"] {
+    /* ⭐ 強化被鎖定 (Disabled) 元件的整體視覺效果 */
+    div[data-testid="stDisabled"] {
         opacity: 0.6 !important;
         cursor: not-allowed !important;
     }
-    [data-testid="stDisabled"] * {
+    div[data-testid="stDisabled"] * {
         cursor: not-allowed !important;
     }
 
-    /* ⭐ 強制將被鎖定的輸入框與下拉選單內的文字變成明顯的灰色 */
-    [data-testid="stDisabled"] div[data-baseweb="select"] > div,
-    [data-testid="stDisabled"] div[data-baseweb="select"] span,[data-testid="stDisabled"] .stTextInput input,
-    [data-testid="stDisabled"] .stNumberInput input {
-        color: #6b7280 !important; /* 深灰色 */
-        -webkit-text-fill-color: #6b7280 !important; /* 確保瀏覽器強制覆寫顏色 */
-        background-color: rgba(0, 0, 0, 0.4) !important; /* 背景變得更暗 */
+    /* ⭐ 終極穿透：強制將被鎖定區域內的「所有文字與輸入框內容」變成深灰色 */
+    div[data-testid="stDisabled"] input,
+    div[data-testid="stDisabled"] div[data-baseweb="select"] * {
+        color: #6b7280 !important;
+        -webkit-text-fill-color: #6b7280 !important;
     }
 
     /* 主要按鈕美化 (漸層 + 動畫) */
@@ -242,7 +239,7 @@ if is_normal_mode:
 elif is_remake_mode:
     st.info("**畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
 elif is_layout_mode:
-    st.info("**分鏡保留模式**：鎖定參考圖[Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
+    st.info("**分鏡保留模式**：鎖定參考圖 [Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
 
 
 # --- 【第一區：核心內容】 ---
@@ -251,7 +248,7 @@ col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
     if is_remake_mode:
-        subj_label = "畫面主角 (Who) 🔒 [重構模式已鎖定]"
+        subj_label = "畫面主角 (Who) 🔒[重構模式已鎖定]"
         subj_val = "同主參考圖主角"
         subj_disabled = True
     else:
@@ -288,7 +285,7 @@ st.info(
 )
 
 if is_normal_mode:
-    st.warning("**排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
+    st.warning("**排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則[Image X] 的編號會對不起來！")
 else:
     st.warning("**排序提醒：** 模式已鎖定第一張為主圖。上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有) ➔ 光線(若有)**。")
 
@@ -380,13 +377,13 @@ with col1:
 
 with col2:
     shot_label = "鏡頭大小 🔒 [分鏡已鎖定]" if camera_disabled else "鏡頭大小"
-    shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled)
+    shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled, help="分鏡保留模式下將鎖定為原圖視角" if camera_disabled else "")
     
     angle_label = "鏡頭角度 🔒 [分鏡已鎖定]" if camera_disabled else "鏡頭角度"
     angle_choice = st.selectbox(angle_label, list(dict_angle.keys()), disabled=camera_disabled)
 
 with col3:
-    pos_label = "鏡頭位置 🔒[分鏡已鎖定]" if camera_disabled else "鏡頭位置"
+    pos_label = "鏡頭位置 🔒 [分鏡已鎖定]" if camera_disabled else "鏡頭位置"
     position_choice = st.selectbox(pos_label, list(dict_position.keys()), disabled=camera_disabled)
     
     if not camera_disabled:
