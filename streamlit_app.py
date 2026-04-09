@@ -91,7 +91,7 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.title("🚀 AI 圖片提示詞生成器")
-st.write("精準控制畫面分鏡，專為 Nano Banana 2 (Stable Diffusion) 引擎打造。")
+st.write("精準控制畫面分鏡，專為 Nano Banana 2 引擎打造。")
 
 # --- 【全新模式切換器】 ---
 st.markdown("### ⚙️ 請選擇產圖模式")
