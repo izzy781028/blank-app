@@ -93,7 +93,7 @@ dict_ratio = {
 st.title("🚀 AI 圖片提示詞生成器")
 st.write("精準控制畫面分鏡，專為 Nano Banana 2 (Stable Diffusion) 引擎打造。")
 
-# ⭐ --- 【全新模式切換器】 ---
+# --- 【全新模式切換器】 ---
 st.markdown("### ⚙️ 請選擇產圖模式")
 mode = st.radio(
     "模式選擇",
@@ -102,18 +102,16 @@ mode = st.radio(
     label_visibility="collapsed"
 )
 
-# 依據模式設定布林值
 is_remake_mode = mode == "🔮 畫面重構模式 (換動作/換視角)"
 is_layout_mode = mode == "📸 分鏡保留模式 (換人/換場景)"
 is_normal_mode = mode == "✨ 一般生成模式 (從零開始)"
 
-# 顯示模式說明
 if is_normal_mode:
     st.info("💡 **一般生成模式**：不需參考圖，直接透過文字指令生成全新的畫面。")
 elif is_remake_mode:
     st.info("🔄 **畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改「動作、場景」，並強制更改「鏡頭視角」。")
 elif is_layout_mode:
-    st.info("🖼️ **分鏡保留模式**：鎖定參考圖 [Image 1] 的「所有攝影機位置與構圖」。您可以將畫面的主角、服裝、背景或光線換掉。")
+    st.info("🖼️ **分鏡保留模式**：鎖定參考圖 [Image 1] 的「所有攝影機位置與構圖」。您可以將畫面的主角、動作、背景或光線換掉。")
 
 st.markdown("---")
 
@@ -122,7 +120,6 @@ st.subheader("1. 畫面核心內容 (Who, Doing What, Where)")
 col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
-    # 邏輯判斷
     if is_remake_mode:
         subj_val = "同參考圖主角"
         subj_disabled = True
@@ -135,7 +132,7 @@ with col_text1:
     user_keyword = st.text_input("📦 畫面主角 (Who)", value=subj_val, disabled=subj_disabled, help=subj_help, placeholder="例如: 一位台灣男性")
 
 with col_text2:
-    act_help = "若留白，將維持原動作" if (is_remake_mode or is_layout_mode) else "(可在此定義面向與表情) 非必填"
+    act_help = "若留白，將維持原動作與姿勢" if (is_remake_mode or is_layout_mode) else "(可在此定義面向與表情) 非必填"
     user_action = st.text_input(
         "🏃‍♂️ 主角動作 (Doing What)", 
         value="" if (is_remake_mode or is_layout_mode) else "看向窗外，手裡拿著咖啡，神情放鬆", 
@@ -153,12 +150,19 @@ st.divider()
 # --- 【第二區：參考圖數量對應與連動】 ---
 st.subheader("2. 參考圖片參數設定 (自動計算 Image 編號)")
 
-if is_normal_mode:
-    st.warning("⚠️ **重要提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
-else:
-    st.warning("⚠️ **參考圖模式提醒：** 上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有)**。")
+# ⭐ 新增：優化參考圖上傳的教育提醒
+st.info(
+    "📸 **【最佳參考圖規範】** 為了獲得最好的 AI 生成效果，請確保上傳的圖片符合以下條件：\n"
+    "1. **高畫質且清晰**，主體佔比明確。\n"
+    "2. **背景不要太複雜**，乾淨的背景能讓 AI 更容易抓取主角/物件。\n"
+    "3. 絕對**不能有浮水印或壓字**，否則浮水印會被 AI 學習並出現在生成結果中。"
+)
 
-# 只要不是一般模式，編號都從 2 開始
+if is_normal_mode:
+    st.warning("⚠️ **排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
+else:
+    st.warning("⚠️ **排序提醒：** 模式已鎖定第一張為主圖。上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有)**。")
+
 img_counter = 2 if not is_normal_mode else 1 
 ref_prompts = [] 
 custom_light_prompt = ""
@@ -197,7 +201,8 @@ with col_ref3:
     if is_remake_mode:
         st.checkbox("💡 光線與色調參考圖 (重構模式已鎖定)", value=False, disabled=True, help="重構模式下，光影強制由主參考圖 [Image 1] 決定。")
     else:
-        use_light_ref = st.checkbox("💡 啟用光線與色調參考圖")
+        # ⭐ 新增：光線參考圖的小提示
+        use_light_ref = st.checkbox("💡 啟用光線與色調參考圖", help="若使用「真實照片」作為光線參考，生成的逼真度與質感效果會最佳！")
         if use_light_ref:
             light_count = st.number_input("輸入光線參考圖數量", min_value=1, max_value=10, value=1, step=1)
             is_also_style_ref = st.checkbox("☑️ 同時作為「視覺風格」參考圖")
@@ -222,12 +227,9 @@ st.divider()
 st.subheader("3. 攝影與風格控制")
 col1, col2, col3 = st.columns(3)
 
-# ⭐ 如果是分鏡保留模式，攝影機相關選單全部反灰
 camera_disabled = is_layout_mode
 
 with col1:
-    # 決定風格選單是否反灰 (若重構模式 或 有勾選風格參考，或分鏡模式且沒有填寫)
-    # 為了讓分鏡模式有彈性，這裡開放選擇，如果不想改，最後程式邏輯會處理
     style_choice = st.selectbox(
         "✨ 視覺風格", 
         ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
@@ -305,20 +307,20 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
     if is_normal_mode and (user_keyword.strip() == "" or user_background.strip() == ""):
         st.error("⚠️ 一般模式下，請確實填寫「畫面主角」與「背景場景」！")
     else:
-        # [處理負面提示詞]
         custom_neg_tags = ""
         if user_negative.strip() != "":
             word_list = [word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
         final_negative_prompt = f"{custom_neg_tags}, {base_negative}" if custom_neg_tags else base_negative
 
-        # [處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
-            # === 1. 畫面重構模式 ===
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
+            else:
+                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
+                
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
@@ -326,27 +328,24 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
         elif is_layout_mode:
-            # === 2. 分鏡保留模式 ===
-            # 強制保留鏡頭跟構圖
             base_prompt = "maintaining the exact camera angle, shot size, and composition of [Image 1]"
             
-            # 主角判斷
             if user_keyword.strip():
                 base_prompt += f", changing subject to: {user_keyword.strip()}"
             else:
                 base_prompt += ", maintaining the exact subject of [Image 1]"
                 
-            # 動作與背景
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
+            else:
+                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
+                
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
             
-            # 風格判斷
             if style_choice != "維持原圖風格" and not is_also_style_ref:
                 base_prompt += f", changing style to: {dict_style[style_choice]}"
             
-            # 光影判斷 (判斷是否有選參考圖，或者下拉選單有改)
             if use_light_ref:
                 base_prompt += f", {custom_light_prompt}"
             elif light_choice != "維持原圖光影":
@@ -355,7 +354,6 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
         else:
-            # === 3. 一般生成模式 ===
             subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
             final_light = custom_light_prompt if use_light_ref else dict_light[light_choice]
             final_style = "" if is_also_style_ref else f"{dict_style[style_choice]}, "
@@ -371,13 +369,11 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             )
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
-        # 將 Base Quality (畫質詞) 統一補在最後面
         final_prompt += f", {base_quality}"
 
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
 
-        # ---------------- 顯示結果 ----------------
         st.success("✅ 成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵全選複製**")
         
