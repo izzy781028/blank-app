@@ -20,8 +20,7 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
-base_quality = "highres, ultra-detailed, 8k resolution"
-base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
+# (已移除 base_quality 與 base_negative)
 
 dict_style = {
     "寫實商業攝影": "clean commercial photography, natural high-end realism, soft cinematic realism, muted saturation, balanced dynamic range, smooth highlight roll-off, gentle tonal separation, delicate midtone detail, subtle film grain, organic tonal response, crisp but not overly sharpened, refined texture clarity, smooth tonal gradation", 
@@ -91,7 +90,6 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.title("🚀 AI 圖片提示詞生成器")
-# ⭐ 移除 (Stable Diffusion)，加入 🍌
 st.write("精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。")
 
 # --- 【全新模式切換器】 ---
@@ -158,7 +156,6 @@ st.info(
     "3. 絕對**不能有浮水印或壓字**，否則浮水印會被 AI 學習並出現在生成結果中。"
 )
 
-# ⭐ 更新排序提醒，加上光線
 if is_normal_mode:
     st.warning("⚠️ **排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
 else:
@@ -307,12 +304,11 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
     if is_normal_mode and (user_keyword.strip() == "" or user_background.strip() == ""):
         st.error("⚠️ 一般模式下，請確實填寫「畫面主角」與「背景場景」！")
     else:
-        # [處理負面提示詞]
+        # [處理負面提示詞：完全依賴使用者輸入]
         custom_neg_tags = ""
         if user_negative.strip() != "":
             word_list = [word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
-        final_negative_prompt = f"{custom_neg_tags}, {base_negative}" if custom_neg_tags else base_negative
 
         # [處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
@@ -374,7 +370,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             )
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
-        final_prompt += f", {base_quality}"
+        # ⭐ 畫質詞已移除
 
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
@@ -383,7 +379,12 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
         st.success("✅ 成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵全選複製**")
         
-        combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{final_negative_prompt}"
+        # ⭐ 動態組合輸出：只有在使用者有輸入負面詞時，才顯示 [Negative Prompt] 區塊
+        if custom_neg_tags:
+            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{custom_neg_tags}"
+        else:
+            combined_output = f"{final_prompt}"
+            
         st.code(combined_output, language="text")
         
         st.info(f"💡 【尺寸參數建議】： 寬度 {1920 if '16:9' in ratio_choice else (1080 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1440 if '4:3' in ratio_choice else (1080 if '3:4' in ratio_choice else 2560))))}px, 高度 {1080 if '16:9' in ratio_choice else (1920 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1080 if '4:3' in ratio_choice else (1440 if '3:4' in ratio_choice else 1080))))}px")
