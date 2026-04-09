@@ -91,7 +91,8 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.title("🚀 AI 圖片提示詞生成器")
-st.write("精準控制畫面分鏡，專為 Nano Banana 2 引擎打造。")
+# ⭐ 移除 (Stable Diffusion)，加入 🍌
+st.write("精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。")
 
 # --- 【全新模式切換器】 ---
 st.markdown("### ⚙️ 請選擇產圖模式")
@@ -150,7 +151,6 @@ st.divider()
 # --- 【第二區：參考圖數量對應與連動】 ---
 st.subheader("2. 參考圖片參數設定 (自動計算 Image 編號)")
 
-# ⭐ 新增：優化參考圖上傳的教育提醒
 st.info(
     "📸 **【最佳參考圖規範】** 為了獲得最好的 AI 生成效果，請確保上傳的圖片符合以下條件：\n"
     "1. **高畫質且清晰**，主體佔比明確。\n"
@@ -158,10 +158,11 @@ st.info(
     "3. 絕對**不能有浮水印或壓字**，否則浮水印會被 AI 學習並出現在生成結果中。"
 )
 
+# ⭐ 更新排序提醒，加上光線
 if is_normal_mode:
     st.warning("⚠️ **排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
 else:
-    st.warning("⚠️ **排序提醒：** 模式已鎖定第一張為主圖。上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有)**。")
+    st.warning("⚠️ **排序提醒：** 模式已鎖定第一張為主圖。上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有) ➔ 光線(若有)**。")
 
 img_counter = 2 if not is_normal_mode else 1 
 ref_prompts = [] 
@@ -201,7 +202,6 @@ with col_ref3:
     if is_remake_mode:
         st.checkbox("💡 光線與色調參考圖 (重構模式已鎖定)", value=False, disabled=True, help="重構模式下，光影強制由主參考圖 [Image 1] 決定。")
     else:
-        # ⭐ 新增：光線參考圖的小提示
         use_light_ref = st.checkbox("💡 啟用光線與色調參考圖", help="若使用「真實照片」作為光線參考，生成的逼真度與質感效果會最佳！")
         if use_light_ref:
             light_count = st.number_input("輸入光線參考圖數量", min_value=1, max_value=10, value=1, step=1)
@@ -307,13 +307,16 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
     if is_normal_mode and (user_keyword.strip() == "" or user_background.strip() == ""):
         st.error("⚠️ 一般模式下，請確實填寫「畫面主角」與「背景場景」！")
     else:
+        # [處理負面提示詞]
         custom_neg_tags = ""
         if user_negative.strip() != "":
             word_list = [word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
         final_negative_prompt = f"{custom_neg_tags}, {base_negative}" if custom_neg_tags else base_negative
 
+        # [處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
+            # === 1. 畫面重構模式 ===
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             
             if user_action.strip():
@@ -328,6 +331,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
         elif is_layout_mode:
+            # === 2. 分鏡保留模式 ===
             base_prompt = "maintaining the exact camera angle, shot size, and composition of [Image 1]"
             
             if user_keyword.strip():
@@ -354,6 +358,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
         else:
+            # === 3. 一般生成模式 ===
             subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
             final_light = custom_light_prompt if use_light_ref else dict_light[light_choice]
             final_style = "" if is_also_style_ref else f"{dict_style[style_choice]}, "
@@ -374,6 +379,7 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
 
+        # ---------------- 顯示結果 ----------------
         st.success("✅ 成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵全選複製**")
         
