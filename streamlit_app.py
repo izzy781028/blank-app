@@ -71,22 +71,20 @@ custom_css = """
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* ⭐ 核彈級覆寫：強制將被鎖定區域內的「所有文字」變成深灰色 */
+    /* ⭐ 強化被鎖定 (Disabled) 元件的整體視覺效果 */
     div[data-testid="stDisabled"] {
         opacity: 0.6 !important;
         cursor: not-allowed !important;
     }
-    
-    div[data-testid="stDisabled"] label,
-    div[data-testid="stDisabled"] div[data-baseweb="select"],
-    div[data-testid="stDisabled"] div[data-baseweb="select"] div,
-    div[data-testid="stDisabled"] div[data-baseweb="select"] span,
-    div[data-testid="stDisabled"] input {
+    div[data-testid="stDisabled"] * {
+        cursor: not-allowed !important;
+    }
+
+    /* ⭐ 終極穿透：強制將被鎖定區域內的「所有文字與輸入框內容」變成深灰色 */
+    div[data-testid="stDisabled"] input,
+    div[data-testid="stDisabled"] div[data-baseweb="select"] * {
         color: #6b7280 !important;
         -webkit-text-fill-color: #6b7280 !important;
-        background-color: rgba(0, 0, 0, 0.3) !important;
-        cursor: not-allowed !important;
-        border-color: rgba(255, 255, 255, 0.02) !important;
     }
 
     /* 主要按鈕美化 (漸層 + 動畫) */
@@ -239,7 +237,7 @@ is_normal_mode = mode == "一般生成模式 (從零開始)"
 if is_normal_mode:
     st.info("**一般生成模式**：不需參考圖，直接透過文字指令生成全新的畫面。")
 elif is_remake_mode:
-    st.info("**畫面重構模式**：繼承參考圖[Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
+    st.info("**畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
 elif is_layout_mode:
     st.info("**分鏡保留模式**：鎖定參考圖 [Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
 
@@ -286,10 +284,11 @@ st.info(
     "3. 絕對**不能有浮水印或壓字**，否則浮水印會被 AI 學習並出現在生成結果中。"
 )
 
+# ⭐ 更新警告標語：加入「場景」
 if is_normal_mode:
-    st.warning("**排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 光線」的順序上傳**，否則[Image X] 的編號會對不起來！")
+    st.warning("**排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 場景 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
 else:
-    st.warning("**排序提醒：** 模式已鎖定第一張為主圖。上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有) ➔ 光線(若有)**。")
+    st.warning("**排序提醒：** 模式已鎖定第一張為主圖。上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有) ➔ 場景(若有) ➔ 光線(若有)**。")
 
 img_counter = 2 if not is_normal_mode else 1 
 ref_prompts =[] 
@@ -297,7 +296,8 @@ custom_light_prompt = ""
 use_light_ref = False
 is_also_style_ref = False 
 
-col_ref1, col_ref2, col_ref3 = st.columns(3)
+# ⭐ 擴充為 4 欄，容納場景參考圖
+col_ref1, col_ref2, col_ref3, col_ref4 = st.columns(4)
 
 with col_ref1:
     use_char_ref = st.checkbox("啟用人物參考圖")
@@ -332,16 +332,27 @@ with col_ref2:
         joined_obj_labels = " and ".join(obj_labels)
         ref_prompts.append(f"referencing object {joined_obj_labels}{attr_str}")
 
+# ⭐ 新增：場景參考圖區塊
 with col_ref3:
+    use_scene_ref = st.checkbox("啟用場景參考圖")
+    if use_scene_ref:
+        scene_count = st.number_input("輸入場景參考圖數量", min_value=1, max_value=10, value=1, step=1)
+        scene_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + scene_count)]
+        img_counter += scene_count 
+        
+        joined_scene_labels = " and ".join(scene_labels)
+        ref_prompts.append(f"referencing background scene from {joined_scene_labels}")
+
+with col_ref4:
     if is_remake_mode:
-        st.checkbox("光線與色調參考圖 🔒 [重構模式已鎖定]", value=False, disabled=True)
+        st.checkbox("光線與色調參考圖 🔒[重構模式已鎖定]", value=False, disabled=True, help="重構模式下，光影強制由主參考圖 [Image 1] 決定。")
     else:
         use_light_ref = st.checkbox("啟用光線與色調參考圖", help="若使用「真實照片」作為光線參考，生成的逼真度與質感效果會最佳！")
         if use_light_ref:
             light_count = st.number_input("輸入光線參考圖數量", min_value=1, max_value=10, value=1, step=1)
             is_also_style_ref = st.checkbox("同時作為「視覺風格」參考圖")
             
-            info_msg = f"鎖定「光線與色調」選單，並佔用 {light_count} 個 Image 編號。"
+            info_msg = f"鎖定「光線與色調」選單，佔用 {light_count} 個 Image 編號。"
             if is_also_style_ref:
                 info_msg = f"鎖定「視覺風格」與「光線」選單，佔用 {light_count} 個 Image 編號。"
             st.info(info_msg)
@@ -363,10 +374,9 @@ col1, col2, col3 = st.columns(3)
 camera_disabled = is_layout_mode
 
 with col1:
-    style_label = "視覺風格 🔒 [由參考圖決定]" if (is_remake_mode or is_also_style_ref) else "視覺風格"
+    style_label = "視覺風格 🔒[由參考圖決定]" if (is_remake_mode or is_also_style_ref) else "視覺風格"
     style_choice = st.selectbox(
-        style_label, 
-        ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
+        style_label,["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
         disabled=is_remake_mode or is_also_style_ref
     )
     
@@ -381,7 +391,7 @@ with col2:
     shot_label = "鏡頭大小 🔒 [分鏡已鎖定]" if camera_disabled else "鏡頭大小"
     shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled, help="分鏡保留模式下將鎖定為原圖視角" if camera_disabled else "")
     
-    angle_label = "鏡頭角度 🔒 [分鏡已鎖定]" if camera_disabled else "鏡頭角度"
+    angle_label = "鏡頭角度 🔒[分鏡已鎖定]" if camera_disabled else "鏡頭角度"
     angle_choice = st.selectbox(angle_label, list(dict_angle.keys()), disabled=camera_disabled)
 
 with col3:
@@ -450,7 +460,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             custom_neg_tags = ", ".join(word_list)
 
         if is_remake_mode:
-            base_prompt = "maintaining the exact subject, visual style, color grading and lighting of[Image 1]"
+            base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
