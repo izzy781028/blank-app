@@ -20,12 +20,11 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
-# ⭐ 已移除 base_quality
 base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
-# ⭐ 更新「寫實商業攝影」的專業光影與質感提示詞
+# ⭐ 更新寫實商業攝影提示詞
 dict_style = {
-    "寫實商業攝影": "clean commercial photography, natural high-end realism, soft cinematic realism, muted saturation, soft contrast, balanced dynamic range, smooth highlight roll-off, gentle tonal separation, delicate midtone detail, subtle film grain, organic tonal response, crisp but not overly sharpened, refined texture clarity, smooth tonal gradation, airy brightness", 
+    "寫實商業攝影": "clean commercial photography, natural high-end realism, soft cinematic realism, muted saturation, balanced dynamic range, smooth highlight roll-off, gentle tonal separation, delicate midtone detail, subtle film grain, organic tonal response, crisp but not overly sharpened, refined texture clarity, smooth tonal gradation", 
     "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
     "科技未來感": "cyberpunk, sci-fi, futuristic, glowing neon lights, intricate mechanical details", 
     "溫暖生活感": "warm lifestyle, slice of life, cozy atmosphere, candid photography", 
@@ -311,8 +310,6 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             )
             
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
-
-        # ⭐ 不再加入 base_quality
 
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
