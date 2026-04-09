@@ -20,8 +20,6 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
-# (已移除 base_quality 與 base_negative)
-
 dict_style = {
     "寫實商業攝影": "clean commercial photography, natural high-end realism, soft cinematic realism, muted saturation, balanced dynamic range, smooth highlight roll-off, gentle tonal separation, delicate midtone detail, subtle film grain, organic tonal response, crisp but not overly sharpened, refined texture clarity, smooth tonal gradation", 
     "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
@@ -173,11 +171,25 @@ with col_ref1:
     use_char_ref = st.checkbox("👤 啟用人物參考圖")
     if use_char_ref:
         char_count = st.number_input("輸入人物參考圖數量", min_value=1, max_value=10, value=1, step=1)
-        char_parts = st.multiselect("請選擇要參考的部位 (可複選)", ["臉部特徵 (Face)", "服裝穿搭 (Clothing)"])
+        
+        # ⭐ 更新選單，加入眼鏡、帽子
+        char_parts = st.multiselect("請選擇要參考的部位 (可複選)", ["臉部特徵 (Face)", "服裝穿搭 (Clothing)", "眼鏡 (Glasses)", "帽子 (Hat)"])
+        
+        # ⭐ 新增自定義部位輸入框
+        custom_parts = st.text_input("✍️ 自定義參考部位 (選填)", placeholder="例如: 手錶 項鍊 (請用空白鍵隔開)", help="將會自動轉成英文標籤")
+        
         char_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + char_count)]
         img_counter += char_count 
-        parts_map = {"臉部特徵 (Face)": "face", "服裝穿搭 (Clothing)": "clothing"}
+        
+        # 整理選擇的部位
+        parts_map = {"臉部特徵 (Face)": "face", "服裝穿搭 (Clothing)": "clothing", "眼鏡 (Glasses)": "glasses", "帽子 (Hat)": "hat"}
         selected_parts = [parts_map[p] for p in char_parts]
+        
+        # 整理自定義的部位
+        if custom_parts.strip() != "":
+            custom_list = [word.strip() for word in custom_parts.replace(',', ' ').split() if word.strip()]
+            selected_parts.extend(custom_list)
+            
         parts_str = f" for {' and '.join(selected_parts)}" if selected_parts else ""
         
         joined_char_labels = " and ".join(char_labels)
@@ -304,15 +316,12 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
     if is_normal_mode and (user_keyword.strip() == "" or user_background.strip() == ""):
         st.error("⚠️ 一般模式下，請確實填寫「畫面主角」與「背景場景」！")
     else:
-        # [處理負面提示詞：完全依賴使用者輸入]
         custom_neg_tags = ""
         if user_negative.strip() != "":
             word_list = [word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
 
-        # [處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
-            # === 1. 畫面重構模式 ===
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             
             if user_action.strip():
@@ -327,7 +336,6 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
         elif is_layout_mode:
-            # === 2. 分鏡保留模式 ===
             base_prompt = "maintaining the exact camera angle, shot size, and composition of [Image 1]"
             
             if user_keyword.strip():
@@ -354,7 +362,6 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
         else:
-            # === 3. 一般生成模式 ===
             subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
             final_light = custom_light_prompt if use_light_ref else dict_light[light_choice]
             final_style = "" if is_also_style_ref else f"{dict_style[style_choice]}, "
@@ -370,16 +377,12 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             )
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
-        # ⭐ 畫質詞已移除
-
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
 
-        # ---------------- 顯示結果 ----------------
         st.success("✅ 成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("👇 **請將滑鼠移至下方黑框的右上角，點擊出現的「📋」圖示即可一鍵全選複製**")
         
-        # ⭐ 動態組合輸出：只有在使用者有輸入負面詞時，才顯示 [Negative Prompt] 區塊
         if custom_neg_tags:
             combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{custom_neg_tags}"
         else:
