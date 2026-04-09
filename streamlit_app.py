@@ -20,9 +20,10 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
+# ⭐ 把純淨版的畫質詞加回來
+base_quality = "highres, ultra-detailed, 8k resolution"
 base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
-# ⭐ 更新寫實商業攝影提示詞
 dict_style = {
     "寫實商業攝影": "clean commercial photography, natural high-end realism, soft cinematic realism, muted saturation, balanced dynamic range, smooth highlight roll-off, gentle tonal separation, delicate midtone detail, subtle film grain, organic tonal response, crisp but not overly sharpened, refined texture clarity, smooth tonal gradation", 
     "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
@@ -310,6 +311,9 @@ if st.button("🪄 組合咒語 (Generate Prompt)", type="primary", use_containe
             )
             
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
+
+        # ⭐ 把精簡版的 base_quality 補回提示詞的最後面
+        final_prompt += f", {base_quality}"
 
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
