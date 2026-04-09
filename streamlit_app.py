@@ -71,20 +71,22 @@ custom_css = """
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* ⭐ 強化被鎖定 (Disabled) 元件的整體視覺效果 */
+    /* ⭐ 核彈級覆寫：強制將被鎖定區域內的「所有文字」變成深灰色 */
     div[data-testid="stDisabled"] {
         opacity: 0.6 !important;
         cursor: not-allowed !important;
     }
-    div[data-testid="stDisabled"] * {
-        cursor: not-allowed !important;
-    }
-
-    /* ⭐ 終極穿透：強制將被鎖定區域內的「所有文字與輸入框內容」變成深灰色 */
-    div[data-testid="stDisabled"] input,
-    div[data-testid="stDisabled"] div[data-baseweb="select"] * {
+    
+    div[data-testid="stDisabled"] label,
+    div[data-testid="stDisabled"] div[data-baseweb="select"],
+    div[data-testid="stDisabled"] div[data-baseweb="select"] div,
+    div[data-testid="stDisabled"] div[data-baseweb="select"] span,
+    div[data-testid="stDisabled"] input {
         color: #6b7280 !important;
         -webkit-text-fill-color: #6b7280 !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        cursor: not-allowed !important;
+        border-color: rgba(255, 255, 255, 0.02) !important;
     }
 
     /* 主要按鈕美化 (漸層 + 動畫) */
@@ -237,7 +239,7 @@ is_normal_mode = mode == "一般生成模式 (從零開始)"
 if is_normal_mode:
     st.info("**一般生成模式**：不需參考圖，直接透過文字指令生成全新的畫面。")
 elif is_remake_mode:
-    st.info("**畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
+    st.info("**畫面重構模式**：繼承參考圖[Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
 elif is_layout_mode:
     st.info("**分鏡保留模式**：鎖定參考圖 [Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
 
@@ -248,7 +250,7 @@ col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
     if is_remake_mode:
-        subj_label = "畫面主角 (Who) 🔒[重構模式已鎖定]"
+        subj_label = "畫面主角 (Who) 🔒 [重構模式已鎖定]"
         subj_val = "同主參考圖主角"
         subj_disabled = True
     else:
