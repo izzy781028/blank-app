@@ -13,24 +13,13 @@ custom_css = """
     
     /* 替換整體背景為高級暗色漸層 */
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #09090b 50%, #1e1b4b 100%) !important;
-        background-attachment: fixed !important;
+        background: linear-gradient(135deg, #0f172a 0%, #09090b 50%, #1e1b4b 100%);
+        background-attachment: fixed;
+        color: #f8fafc;
     }
 
-    /* 針對手機版 (iOS/Android) 修正漸層比例破圖問題 */
-    @media screen and (max-width: 768px) {
-        .stApp {
-            background-attachment: scroll !important;
-        }
-    }
-
-    /* 確保原本預設的底色透明化，讓漸層透出來 */[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    /* 確保原本預設的白色/黑色底色透明化，讓漸層透出來 */[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: transparent !important;
-    }
-
-    /* 強制所有基礎文字變白，防止手機淺色模式干擾 */
-    p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown {
-        color: #f8fafc !important;
     }
     
     /* 漸層大標題 */
@@ -47,7 +36,7 @@ custom_css = """
     /* 副標題與敘述小字 */
     .sub-title {
         font-size: 1.1rem;
-        color: #9ca3af !important;
+        color: #9ca3af;
         margin-bottom: 2rem;
         font-weight: 500;
     }
@@ -56,7 +45,7 @@ custom_css = """
     .section-header {
         font-size: 1.4rem;
         font-weight: 700;
-        color: #f3f4f6 !important;
+        color: #f3f4f6;
         margin-top: 2.5rem;
         margin-bottom: 1rem;
         padding-left: 12px;
@@ -82,29 +71,26 @@ custom_css = """
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* ⭐ 保留被鎖定區域的深灰色 (使用更高的 CSS 權重避免被上方白色覆蓋) */
+    /* ⭐ 強化被鎖定 (Disabled) 元件的整體視覺效果 */
     div[data-testid="stDisabled"] {
         opacity: 0.6 !important;
         cursor: not-allowed !important;
     }
-    div[data-testid="stDisabled"] label,
-    div[data-testid="stDisabled"] p,
-    div[data-testid="stDisabled"] span {
-        color: #6b7280 !important;
+    div[data-testid="stDisabled"] * {
+        cursor: not-allowed !important;
     }
+
+    /* ⭐ 終極穿透：強制將被鎖定區域內的「所有文字與輸入框內容」變成深灰色 */
     div[data-testid="stDisabled"] input,
     div[data-testid="stDisabled"] div[data-baseweb="select"] * {
         color: #6b7280 !important;
         -webkit-text-fill-color: #6b7280 !important;
-        background-color: rgba(0, 0, 0, 0.3) !important;
-        cursor: not-allowed !important;
-        border-color: rgba(255, 255, 255, 0.02) !important;
     }
 
     /* 主要按鈕美化 (漸層 + 動畫) */
     div.stButton > button:first-child {
         background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-        color: white !important;
+        color: white;
         border: none;
         border-radius: 12px;
         padding: 12px 24px;
@@ -262,7 +248,7 @@ col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
     if is_remake_mode:
-        subj_label = "畫面主角 (Who) 🔒[重構模式已鎖定]"
+        subj_label = "畫面主角 (Who) 🔒 [重構模式已鎖定]"
         subj_val = "同主參考圖主角"
         subj_disabled = True
     else:
@@ -363,7 +349,7 @@ with col_ref4:
             light_count = st.number_input("輸入光線參考圖數量", min_value=1, max_value=10, value=1, step=1)
             is_also_style_ref = st.checkbox("同時作為「視覺風格」參考圖")
             
-            info_msg = f"鎖定「光線與色調」選單，佔用 {light_count} 個 Image 編號。"
+            info_msg = f"鎖定「光線與色調」選單，並佔用 {light_count} 個 Image 編號。"
             if is_also_style_ref:
                 info_msg = f"鎖定「視覺風格」與「光線」選單，佔用 {light_count} 個 Image 編號。"
             st.info(info_msg)
@@ -471,13 +457,14 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             word_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
 
+        # ⭐ 修正所有 of[Image 1] 為 of [Image 1]
         if is_remake_mode:
-            base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
+            base_prompt = "maintaining the exact subject, visual style, color grading and lighting of[Image 1]"
             
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
                 
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
@@ -491,7 +478,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             if user_keyword.strip():
                 base_prompt += f", changing subject to: {user_keyword.strip()}"
             else:
-                base_prompt += ", maintaining the exact subject of [Image 1]"
+                base_prompt += ", maintaining the exact subject of[Image 1]"
                 
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
