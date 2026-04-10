@@ -457,9 +457,9 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             word_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
 
-        # ⭐ 修正所有 of[Image 1] 為 of [Image 1]
+        # ⭐ 修正所有 of [Image 1] (確保完全有空格)
         if is_remake_mode:
-            base_prompt = "maintaining the exact subject, visual style, color grading and lighting of[Image 1]"
+            base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
@@ -478,7 +478,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             if user_keyword.strip():
                 base_prompt += f", changing subject to: {user_keyword.strip()}"
             else:
-                base_prompt += ", maintaining the exact subject of[Image 1]"
+                base_prompt += ", maintaining the exact subject of [Image 1]"
                 
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
