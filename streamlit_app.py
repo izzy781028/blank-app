@@ -14,7 +14,9 @@ custom_css = """
         background: linear-gradient(135deg, #0f172a 0%, #09090b 50%, #1e1b4b 100%);
         background-attachment: fixed;
         color: #f8fafc;
-    }[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    }
+
+    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: transparent !important;
     }
     
@@ -44,7 +46,9 @@ custom_css = """
         padding-left: 12px;
         border-left: 6px solid #4F46E5;
         letter-spacing: 0.5px;
-    }[data-testid="stAlert"] {
+    }
+
+    [data-testid="stAlert"] {
         border-radius: 12px;
         border: none;
         background-color: rgba(255, 255, 255, 0.05) !important;
@@ -186,6 +190,7 @@ dict_position_map = {
     "第一人稱視角 (POV)": "▫️ ▫️ ▫️<br>▫️ 👀 ▫️<br>▫️ ▫️ ▫️"
 }
 
+# ⭐ 新增：溫潤暖調 (暖色溫)
 dict_light = {
     "白天自然光": "natural light, sunlight", 
     "黃昏日落暖光 (Magic hour)": "golden hour, sunset lighting", 
@@ -193,6 +198,7 @@ dict_light = {
     "棚拍柔光": "soft diffused light, even illumination, flawless lighting, gentle shadows", 
     "高反差戲劇光": "dramatic lighting, high contrast", 
     "清冷藍調 (冷色溫)": "cool color temperature, bluish tint, cold lighting, cool color grading, cinematic cool tones",
+    "溫潤暖調 (暖色溫)": "warm color temperature, warm tint, cozy lighting, warm color grading, cinematic warm tones",
     "冷色科技光": "cool tone, blue and teal lighting"
 }
 
@@ -208,7 +214,7 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.markdown("<h1 class='main-title'>AI 圖片提示詞生成器</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 引擎打造。</p>", unsafe_allow_html=True)
 
 # --- 【全新模式切換器】 ---
 st.markdown("<div class='section-header'>選擇產圖模式</div>", unsafe_allow_html=True)
@@ -238,7 +244,7 @@ col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
     if is_remake_mode:
-        subj_label = "畫面主角 (Who) 🔒 [重構模式已鎖定]"
+        subj_label = "畫面主角 (Who) 🔒[重構模式已鎖定]"
         subj_val = "同主參考圖主角"
         subj_disabled = True
     else:
@@ -271,7 +277,6 @@ with col_text3:
         bg_help = "若留白，將維持原場景"
         bg_value = ""
     elif is_character_mode:
-        # ⭐ 更新背景輸入提示：加入場景參考圖的條件說明
         bg_help = "可自訂場景。若留白且「未使用」場景參考圖，將預設為乾淨純白背景"
         bg_value = ""
     else:
@@ -300,7 +305,7 @@ img_counter = 2 if (is_remake_mode or is_layout_mode) else 1
 ref_prompts =[] 
 custom_light_prompt = ""
 use_light_ref = False
-use_scene_ref = False # 確保全域變數存在
+use_scene_ref = False
 is_also_style_ref = False 
 
 col_ref1, col_ref2, col_ref3, col_ref4 = st.columns(4)
@@ -316,7 +321,7 @@ with col_ref1:
         char_parts = st.multiselect("請選擇要參考的部位 (可複選)",["臉部特徵 (Face)", "髮型 (Hairstyle)", "服裝穿搭 (Clothing)", "眼鏡 (Glasses)", "帽子 (Hat)"])
         custom_parts = st.text_input("自定義參考部位 (選填)", placeholder="例如: 手錶 項鍊 (請用空白鍵隔開)", help="將會自動轉成英文標籤")
         
-        char_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + char_count)]
+        char_labels =[f"[Image {i}]" for i in range(img_counter, img_counter + char_count)]
         img_counter += char_count 
         
         parts_map = {"臉部特徵 (Face)": "face", "髮型 (Hairstyle)": "hairstyle", "服裝穿搭 (Clothing)": "clothing", "眼鏡 (Glasses)": "glasses", "帽子 (Hat)": "hat"}
@@ -362,7 +367,7 @@ with col_ref4:
     if is_remake_mode:
         st.checkbox("光線與色調 🔒[重構模式已鎖定]", value=False, disabled=True)
     elif is_character_mode:
-        st.checkbox("光線與色調 🔒 [角色模式已鎖定]", value=False, disabled=True, help="角色設定圖將強制使用棚拍自然光設定。")
+        st.checkbox("光線與色調 🔒[角色模式已鎖定]", value=False, disabled=True, help="角色設定圖將強制使用棚拍自然光設定。")
     else:
         use_light_ref = st.checkbox("啟用光線與色調參考圖", help="若使用「真實照片」作為光線參考，生成的逼真度與質感效果會最佳！")
         if use_light_ref:
@@ -391,17 +396,15 @@ col1, col2, col3 = st.columns(3)
 camera_disabled = is_layout_mode or is_character_mode
 
 with col1:
-    style_label = "視覺風格 🔒 [模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
+    style_label = "視覺風格 🔒[模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
     style_choice = st.selectbox(
-        style_label, 
-        ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
+        style_label,["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
         disabled=is_remake_mode or is_also_style_ref or is_character_mode
     )
     
-    light_label = "光線與色調 🔒 [模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
+    light_label = "光線與色調 🔒[模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
     light_choice = st.selectbox(
-        light_label,
-        ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
+        light_label,["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
         disabled=use_light_ref or is_remake_mode or is_character_mode
     )
 
@@ -427,7 +430,7 @@ with col3:
         st.caption("*( 人像下方為正前方 )*")
     
     if is_character_mode:
-        ratio_label = "畫面比例 🔒 [模式已鎖定]"
+        ratio_label = "畫面比例 🔒[模式已鎖定]"
         ratio_options =["橫式簡報滿版 (16:9)"]
         ratio_disabled = True
     else:
@@ -494,7 +497,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
@@ -506,11 +509,11 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             if user_keyword.strip():
                 base_prompt += f", changing subject to: {user_keyword.strip()}"
             else:
-                base_prompt += ", maintaining the exact subject of [Image 1]"
+                base_prompt += ", maintaining the exact subject of[Image 1]"
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
             
@@ -526,14 +529,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
 
         elif is_character_mode:
             subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
-            
-            # ⭐ 角色模式背景動態判斷 (手動輸入優先 > 場景參考圖 > 預設白底)
-            if user_background.strip():
-                bg_str = f"in {user_background.strip()}. "
-            elif use_scene_ref:
-                bg_str = ""  # 若有場景參考圖且無手動輸入，則完全留空讓參考圖發揮
-            else:
-                bg_str = "clean solid white background. "
+            bg_str = f"in {user_background.strip()}" if user_background.strip() else "clean solid white background"
             
             char_sheet_template = (
                 f"Create a photographic character reference sheet for {subject_and_action}. "
@@ -541,7 +537,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
                 "The entire top row must show full-body views from head to toe facing four different directions: the front, the side, a three-quarter view, and the back. "
                 "All subjects in the top row must be fully visible including feet, with no cropping at the ankles, knees, or head. "
                 "The bottom row must contain four close-up shots of the face (including front and profile views) corresponding to each of the full-body shots above. "
-                f"{bg_str}"
+                f"{bg_str}. "
                 "The style must be photorealistic, life-like, live action shot on a DSLR camera with 35mm film and muted color tones. Do not make it look like a 3D render"
             )
             final_prompt = char_sheet_template + ", " + ", ".join(ref_prompts) if ref_prompts else char_sheet_template
