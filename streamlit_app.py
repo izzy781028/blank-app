@@ -143,8 +143,9 @@ if not st.session_state.authenticated:
 # ==================== 3. 字典定義區 ====================
 base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
+# ⭐ 更新為「寫實風格感」與最新的綜合提示詞
 dict_style = {
-    "寫實商業攝影": "clean commercial photography, natural high-end realism, soft cinematic realism, muted saturation, balanced dynamic range, smooth highlight roll-off, gentle tonal separation, delicate midtone detail, subtle film grain, organic tonal response, crisp but not overly sharpened, refined texture clarity, smooth tonal gradation", 
+    "寫實風格感": "photorealistic, life-like, live action shot on a DSLR camera with 35mm film and muted color tones, delicate midtone detail, subtle film grain, crisp but not overly sharpened, refined texture clarity", 
     "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
     "科技未來感": "cyberpunk, sci-fi, futuristic, glowing neon lights, intricate mechanical details", 
     "溫暖生活感": "warm lifestyle, slice of life, cozy atmosphere, candid photography", 
@@ -241,7 +242,7 @@ col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
     if is_remake_mode:
-        subj_label = "畫面主角 (Who) 🔒 [重構模式已鎖定]"
+        subj_label = "畫面主角 (Who) 🔒[重構模式已鎖定]"
         subj_val = "同主參考圖主角"
         subj_disabled = True
     else:
@@ -268,7 +269,6 @@ with col_text2:
     )
 
 with col_text3:
-    # ⭐ 角色模式不再鎖定背景
     bg_label = "背景場景 (Where)"
     
     if is_remake_mode or is_layout_mode:
@@ -393,27 +393,29 @@ col1, col2, col3 = st.columns(3)
 camera_disabled = is_layout_mode or is_character_mode
 
 with col1:
-    style_label = "視覺風格 🔒 [模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
+    style_label = "視覺風格 🔒[模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
     style_choice = st.selectbox(
-        style_label,["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
+        style_label, 
+        ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
         disabled=is_remake_mode or is_also_style_ref or is_character_mode
     )
     
-    light_label = "光線與色調 🔒 [模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
+    light_label = "光線與色調 🔒[模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
     light_choice = st.selectbox(
-        light_label,["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
+        light_label,
+        ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
         disabled=use_light_ref or is_remake_mode or is_character_mode
     )
 
 with col2:
-    shot_label = "鏡頭大小 🔒[模式已鎖定]" if camera_disabled else "鏡頭大小"
+    shot_label = "鏡頭大小 🔒 [模式已鎖定]" if camera_disabled else "鏡頭大小"
     shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled)
     
-    angle_label = "鏡頭角度 🔒[模式已鎖定]" if camera_disabled else "鏡頭角度"
+    angle_label = "鏡頭角度 🔒 [模式已鎖定]" if camera_disabled else "鏡頭角度"
     angle_choice = st.selectbox(angle_label, list(dict_angle.keys()), disabled=camera_disabled)
 
 with col3:
-    pos_label = "鏡頭位置 🔒 [模式已鎖定]" if camera_disabled else "鏡頭位置"
+    pos_label = "鏡頭位置 🔒[模式已鎖定]" if camera_disabled else "鏡頭位置"
     position_choice = st.selectbox(pos_label, list(dict_position.keys()), disabled=camera_disabled)
     
     if not camera_disabled:
@@ -510,11 +512,13 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
+            
             if style_choice != "維持原圖風格" and not is_also_style_ref:
                 base_prompt += f", changing style to: {dict_style[style_choice]}"
+            
             if use_light_ref:
                 base_prompt += f", {custom_light_prompt}"
             elif light_choice != "維持原圖光影":
@@ -524,7 +528,6 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
 
         elif is_character_mode:
             subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
-            # ⭐ 角色模式不再預設強制純色背景，改為使用者填寫
             bg_str = f"in {user_background.strip()}" if user_background.strip() else "clean solid background"
             
             char_sheet_template = (
