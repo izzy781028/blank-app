@@ -212,7 +212,7 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.markdown("<h1 class='main-title'>AI 圖片提示詞生成器</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 引擎打造。</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。</p>", unsafe_allow_html=True)
 
 # --- 【全新模式切換器】 ---
 st.markdown("<div class='section-header'>選擇產圖模式</div>", unsafe_allow_html=True)
@@ -232,7 +232,7 @@ if is_normal_mode:
 elif is_remake_mode:
     st.info("**畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
 elif is_layout_mode:
-    st.info("**分鏡保留模式**：鎖定參考圖 [Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
+    st.info("**分鏡保留模式**：鎖定參考圖[Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
 elif is_character_mode:
     st.info("**角色設計模式**：為指定主角生成包含「全身多角度」與「臉部特寫」的專業 8 格角色設定圖。")
 
@@ -242,7 +242,7 @@ col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
     if is_remake_mode:
-        subj_label = "畫面主角 (Who) 🔒 [重構模式已鎖定]"
+        subj_label = "畫面主角 (Who) 🔒[重構模式已鎖定]"
         subj_val = "同主參考圖主角"
         subj_disabled = True
     else:
@@ -275,8 +275,7 @@ with col_text3:
         bg_help = "若留白，將維持原場景"
         bg_value = ""
     elif is_character_mode:
-        # ⭐ 更新背景提示文字
-        bg_help = "可自訂場景。若留白，將預設為乾淨純白背景"
+        bg_help = "可自訂場景。若留白，將預設為乾淨純色背景"
         bg_value = ""
     else:
         bg_help = "*必填"
@@ -316,13 +315,15 @@ with col_ref1:
 
     if char_ref_type == "一般人物參考圖 (可選部位)":
         char_count = st.number_input("輸入人物參考圖數量", min_value=1, max_value=10, value=1, step=1)
-        char_parts = st.multiselect("請選擇要參考的部位 (可複選)",["臉部特徵 (Face)", "服裝穿搭 (Clothing)", "眼鏡 (Glasses)", "帽子 (Hat)"])
+        # ⭐ 補回髮型的選項
+        char_parts = st.multiselect("請選擇要參考的部位 (可複選)",["臉部特徵 (Face)", "髮型 (Hairstyle)", "服裝穿搭 (Clothing)", "眼鏡 (Glasses)", "帽子 (Hat)"])
         custom_parts = st.text_input("自定義參考部位 (選填)", placeholder="例如: 手錶 項鍊 (請用空白鍵隔開)", help="將會自動轉成英文標籤")
         
         char_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + char_count)]
         img_counter += char_count 
         
-        parts_map = {"臉部特徵 (Face)": "face", "服裝穿搭 (Clothing)": "clothing", "眼鏡 (Glasses)": "glasses", "帽子 (Hat)": "hat"}
+        # ⭐ 補回髮型的對應
+        parts_map = {"臉部特徵 (Face)": "face", "髮型 (Hairstyle)": "hairstyle", "服裝穿搭 (Clothing)": "clothing", "眼鏡 (Glasses)": "glasses", "帽子 (Hat)": "hat"}
         selected_parts =[parts_map[p] for p in char_parts]
         
         if custom_parts.strip() != "":
@@ -356,7 +357,7 @@ with col_ref3:
     use_scene_ref = st.checkbox("啟用場景參考圖")
     if use_scene_ref:
         scene_count = st.number_input("輸入場景參考圖數量", min_value=1, max_value=10, value=1, step=1)
-        scene_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + scene_count)]
+        scene_labels =[f"[Image {i}]" for i in range(img_counter, img_counter + scene_count)]
         img_counter += scene_count 
         joined_scene_labels = " and ".join(scene_labels)
         ref_prompts.append(f"referencing background scene from {joined_scene_labels}")
@@ -394,25 +395,23 @@ col1, col2, col3 = st.columns(3)
 camera_disabled = is_layout_mode or is_character_mode
 
 with col1:
-    style_label = "視覺風格 🔒[模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
+    style_label = "視覺風格 🔒 [模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
     style_choice = st.selectbox(
-        style_label, 
-        ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
+        style_label,["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
         disabled=is_remake_mode or is_also_style_ref or is_character_mode
     )
     
-    light_label = "光線與色調 🔒[模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
+    light_label = "光線與色調 🔒 [模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
     light_choice = st.selectbox(
-        light_label,
-        ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
+        light_label,["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
         disabled=use_light_ref or is_remake_mode or is_character_mode
     )
 
 with col2:
-    shot_label = "鏡頭大小 🔒 [模式已鎖定]" if camera_disabled else "鏡頭大小"
+    shot_label = "鏡頭大小 🔒[模式已鎖定]" if camera_disabled else "鏡頭大小"
     shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled)
     
-    angle_label = "鏡頭角度 🔒 [模式已鎖定]" if camera_disabled else "鏡頭角度"
+    angle_label = "鏡頭角度 🔒[模式已鎖定]" if camera_disabled else "鏡頭角度"
     angle_choice = st.selectbox(angle_label, list(dict_angle.keys()), disabled=camera_disabled)
 
 with col3:
@@ -489,16 +488,15 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             word_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
             
-        # ⭐ 角色模式自動加上 text 等負面詞防護
         if is_character_mode:
-            custom_neg_tags = "text, 3d render, octane render, cgi, " + custom_neg_tags if custom_neg_tags else "text, 3d render, octane render, cgi"
+            custom_neg_tags = "3d render, octane render, cgi, " + custom_neg_tags if custom_neg_tags else "3d render, octane render, cgi"
 
         if is_remake_mode:
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
@@ -530,7 +528,6 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
 
         elif is_character_mode:
             subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
-            # ⭐ 角色模式鎖定背景改為純白色背景
             bg_str = f"in {user_background.strip()}" if user_background.strip() else "clean solid white background"
             
             char_sheet_template = (
