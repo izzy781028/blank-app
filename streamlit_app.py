@@ -6,20 +6,23 @@ st.set_page_config(layout="wide", page_title="AI 圖片提示詞生成器")
 # 注入自定義 CSS 美化介面
 custom_css = """
 <style>
+    /* 隱藏預設的選單與底部浮水印 */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
+    /* 替換整體背景為高級暗色漸層 */
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #09090b 50%, #1e1b4b 100%);
         background-attachment: fixed;
         color: #f8fafc;
     }
 
-    [data-testid="stAppViewContainer"],[data-testid="stHeader"] {
+    /* 確保原本預設的白色/黑色底色透明化，讓漸層透出來 */[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: transparent !important;
     }
     
+    /* 漸層大標題 */
     .main-title {
         background: linear-gradient(135deg, #818cf8 0%, #f472b6 100%);
         -webkit-background-clip: text;
@@ -30,6 +33,7 @@ custom_css = """
         padding-bottom: 10px;
     }
     
+    /* 副標題與敘述小字 */
     .sub-title {
         font-size: 1.1rem;
         color: #9ca3af;
@@ -37,6 +41,7 @@ custom_css = """
         font-weight: 500;
     }
 
+    /* 區塊標題 (帶有左側色塊裝飾) */
     .section-header {
         font-size: 1.4rem;
         font-weight: 700;
@@ -48,6 +53,7 @@ custom_css = """
         letter-spacing: 0.5px;
     }
 
+    /* 所有 Alert 框 (Info, Warning, Error) 增加大圓角與微透明 */
     [data-testid="stAlert"] {
         border-radius: 12px;
         border: none;
@@ -57,6 +63,7 @@ custom_css = """
         color: #e5e7eb;
     }
 
+    /* 輸入框與下拉選單的圓角與預設顏色 */
     .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
         border-radius: 10px !important;
         background-color: rgba(0, 0, 0, 0.2) !important;
@@ -64,23 +71,23 @@ custom_css = """
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
+    /* ⭐ 強化被鎖定 (Disabled) 元件的整體視覺效果 */
     div[data-testid="stDisabled"] {
         opacity: 0.6 !important;
         cursor: not-allowed !important;
     }
-    
-    div[data-testid="stDisabled"] label,
-    div[data-testid="stDisabled"] div[data-baseweb="select"],
-    div[data-testid="stDisabled"] div[data-baseweb="select"] div,
-    div[data-testid="stDisabled"] div[data-baseweb="select"] span,
-    div[data-testid="stDisabled"] input {
-        color: #6b7280 !important;
-        -webkit-text-fill-color: #6b7280 !important;
-        background-color: rgba(0, 0, 0, 0.3) !important;
+    div[data-testid="stDisabled"] * {
         cursor: not-allowed !important;
-        border-color: rgba(255, 255, 255, 0.02) !important;
     }
 
+    /* ⭐ 終極穿透：強制將被鎖定區域內的「所有文字與輸入框內容」變成深灰色 */
+    div[data-testid="stDisabled"] input,
+    div[data-testid="stDisabled"] div[data-baseweb="select"] * {
+        color: #6b7280 !important;
+        -webkit-text-fill-color: #6b7280 !important;
+    }
+
+    /* 主要按鈕美化 (漸層 + 動畫) */
     div.stButton > button:first-child {
         background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
         color: white;
@@ -99,6 +106,7 @@ custom_css = """
         box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
     }
     
+    /* 模式選擇 (Radio Button) 加上背景框使其像開關 */
     div.row-widget.stRadio > div {
         background-color: rgba(255, 255, 255, 0.03);
         padding: 15px 20px;
@@ -106,6 +114,7 @@ custom_css = """
         border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
+    /* 雷達圖卡片美化 */
     .radar-card {
         background: linear-gradient(145deg, rgba(79,70,229,0.1) 0%, rgba(236,72,153,0.05) 100%);
         border: 1px solid rgba(255,255,255,0.05);
@@ -190,7 +199,6 @@ dict_position_map = {
     "第一人稱視角 (POV)": "▫️ ▫️ ▫️<br>▫️ 👀 ▫️<br>▫️ ▫️ ▫️"
 }
 
-# ⭐ 新增「清冷藍調 (冷色溫)」選項
 dict_light = {
     "白天自然光": "natural light, sunlight", 
     "黃昏日落暖光 (Magic hour)": "golden hour, sunset lighting", 
@@ -213,7 +221,7 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.markdown("<h1 class='main-title'>AI 圖片提示詞生成器</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 引擎打造。</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。</p>", unsafe_allow_html=True)
 
 # --- 【全新模式切換器】 ---
 st.markdown("<div class='section-header'>選擇產圖模式</div>", unsafe_allow_html=True)
@@ -231,7 +239,7 @@ is_normal_mode = mode == "一般生成模式 (從零開始)"
 if is_normal_mode:
     st.info("**一般生成模式**：不需參考圖，直接透過文字指令生成全新的畫面。")
 elif is_remake_mode:
-    st.info("**畫面重構模式**：繼承參考圖[Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
+    st.info("**畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
 elif is_layout_mode:
     st.info("**分鏡保留模式**：鎖定參考圖 [Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
 elif is_character_mode:
@@ -243,7 +251,7 @@ col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
     if is_remake_mode:
-        subj_label = "畫面主角 (Who) 🔒 [重構模式已鎖定]"
+        subj_label = "畫面主角 (Who) 🔒[重構模式已鎖定]"
         subj_val = "同主參考圖主角"
         subj_disabled = True
     else:
@@ -316,13 +324,15 @@ with col_ref1:
 
     if char_ref_type == "一般人物參考圖 (可選部位)":
         char_count = st.number_input("輸入人物參考圖數量", min_value=1, max_value=10, value=1, step=1)
-        char_parts = st.multiselect("請選擇要參考的部位 (可複選)",["臉部特徵 (Face)", "服裝穿搭 (Clothing)", "眼鏡 (Glasses)", "帽子 (Hat)"])
+        # ⭐ 新增「髮型 (Hairstyle)」選項
+        char_parts = st.multiselect("請選擇要參考的部位 (可複選)",["臉部特徵 (Face)", "髮型 (Hairstyle)", "服裝穿搭 (Clothing)", "眼鏡 (Glasses)", "帽子 (Hat)"])
         custom_parts = st.text_input("自定義參考部位 (選填)", placeholder="例如: 手錶 項鍊 (請用空白鍵隔開)", help="將會自動轉成英文標籤")
         
         char_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + char_count)]
         img_counter += char_count 
         
-        parts_map = {"臉部特徵 (Face)": "face", "服裝穿搭 (Clothing)": "clothing", "眼鏡 (Glasses)": "glasses", "帽子 (Hat)": "hat"}
+        # ⭐ 對應字典也同步新增髮型
+        parts_map = {"臉部特徵 (Face)": "face", "髮型 (Hairstyle)": "hairstyle", "服裝穿搭 (Clothing)": "clothing", "眼鏡 (Glasses)": "glasses", "帽子 (Hat)": "hat"}
         selected_parts =[parts_map[p] for p in char_parts]
         
         if custom_parts.strip() != "":
@@ -377,7 +387,7 @@ with col_ref4:
                 info_msg = f"鎖定「視覺風格」與「光線」選單，佔用 {light_count} 個 Image 編號。"
             st.info(info_msg)
             
-            light_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + light_count)]
+            light_labels =[f"[Image {i}]" for i in range(img_counter, img_counter + light_count)]
             img_counter += light_count 
             
             joined_light_labels = " and ".join(light_labels)
@@ -394,14 +404,13 @@ col1, col2, col3 = st.columns(3)
 camera_disabled = is_layout_mode or is_character_mode
 
 with col1:
-    style_label = "視覺風格 🔒 [模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
+    style_label = "視覺風格 🔒[模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
     style_choice = st.selectbox(
-        style_label, 
-        ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
+        style_label,["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
         disabled=is_remake_mode or is_also_style_ref or is_character_mode
     )
     
-    light_label = "光線與色調 🔒 [模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
+    light_label = "光線與色調 🔒[模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
     light_choice = st.selectbox(
         light_label,
         ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
@@ -409,7 +418,7 @@ with col1:
     )
 
 with col2:
-    shot_label = "鏡頭大小 🔒[模式已鎖定]" if camera_disabled else "鏡頭大小"
+    shot_label = "鏡頭大小 🔒 [模式已鎖定]" if camera_disabled else "鏡頭大小"
     shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled)
     
     angle_label = "鏡頭角度 🔒[模式已鎖定]" if camera_disabled else "鏡頭角度"
@@ -497,7 +506,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
