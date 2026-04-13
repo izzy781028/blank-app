@@ -6,23 +6,20 @@ st.set_page_config(layout="wide", page_title="AI 圖片提示詞生成器")
 # 注入自定義 CSS 美化介面
 custom_css = """
 <style>
-    /* 隱藏預設的選單與底部浮水印 */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* 替換整體背景為高級暗色漸層 */
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #09090b 50%, #1e1b4b 100%);
         background-attachment: fixed;
         color: #f8fafc;
     }
 
-    /* 確保原本預設的白色/黑色底色透明化，讓漸層透出來 */[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: transparent !important;
     }
     
-    /* 漸層大標題 */
     .main-title {
         background: linear-gradient(135deg, #818cf8 0%, #f472b6 100%);
         -webkit-background-clip: text;
@@ -33,7 +30,6 @@ custom_css = """
         padding-bottom: 10px;
     }
     
-    /* 副標題與敘述小字 */
     .sub-title {
         font-size: 1.1rem;
         color: #9ca3af;
@@ -41,7 +37,6 @@ custom_css = """
         font-weight: 500;
     }
 
-    /* 區塊標題 (帶有左側色塊裝飾) */
     .section-header {
         font-size: 1.4rem;
         font-weight: 700;
@@ -53,7 +48,6 @@ custom_css = """
         letter-spacing: 0.5px;
     }
 
-    /* 所有 Alert 框 (Info, Warning, Error) 增加大圓角與微透明 */
     [data-testid="stAlert"] {
         border-radius: 12px;
         border: none;
@@ -63,7 +57,6 @@ custom_css = """
         color: #e5e7eb;
     }
 
-    /* 輸入框與下拉選單的圓角與預設顏色 */
     .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
         border-radius: 10px !important;
         background-color: rgba(0, 0, 0, 0.2) !important;
@@ -71,23 +64,23 @@ custom_css = """
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* ⭐ 強化被鎖定 (Disabled) 元件的整體視覺效果 */
     div[data-testid="stDisabled"] {
         opacity: 0.6 !important;
         cursor: not-allowed !important;
     }
-    div[data-testid="stDisabled"] * {
-        cursor: not-allowed !important;
-    }
-
-    /* ⭐ 終極穿透：強制將被鎖定區域內的「所有文字與輸入框內容」變成深灰色 */
-    div[data-testid="stDisabled"] input,
-    div[data-testid="stDisabled"] div[data-baseweb="select"] * {
+    
+    div[data-testid="stDisabled"] label,
+    div[data-testid="stDisabled"] div[data-baseweb="select"],
+    div[data-testid="stDisabled"] div[data-baseweb="select"] div,
+    div[data-testid="stDisabled"] div[data-baseweb="select"] span,
+    div[data-testid="stDisabled"] input {
         color: #6b7280 !important;
         -webkit-text-fill-color: #6b7280 !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        cursor: not-allowed !important;
+        border-color: rgba(255, 255, 255, 0.02) !important;
     }
 
-    /* 主要按鈕美化 (漸層 + 動畫) */
     div.stButton > button:first-child {
         background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
         color: white;
@@ -106,7 +99,6 @@ custom_css = """
         box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
     }
     
-    /* 模式選擇 (Radio Button) 加上背景框使其像開關 */
     div.row-widget.stRadio > div {
         background-color: rgba(255, 255, 255, 0.03);
         padding: 15px 20px;
@@ -114,7 +106,6 @@ custom_css = """
         border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* 雷達圖卡片美化 */
     .radar-card {
         background: linear-gradient(145deg, rgba(79,70,229,0.1) 0%, rgba(236,72,153,0.05) 100%);
         border: 1px solid rgba(255,255,255,0.05);
@@ -220,18 +211,19 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.markdown("<h1 class='main-title'>AI 圖片提示詞生成器</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 引擎打造。</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。</p>", unsafe_allow_html=True)
 
 # --- 【全新模式切換器】 ---
 st.markdown("<div class='section-header'>選擇產圖模式</div>", unsafe_allow_html=True)
 mode = st.radio(
-    "模式選擇",["一般生成模式 (從零開始)", "畫面重構模式 (換動作/換視角)", "分鏡保留模式 (換人/換場景)"],
+    "模式選擇",["一般生成模式 (從零開始)", "畫面重構模式 (換動作/換視角)", "分鏡保留模式 (換人/換場景)", "角色設計模式 (三視圖/設定集)"],
     horizontal=True,
     label_visibility="collapsed"
 )
 
 is_remake_mode = mode == "畫面重構模式 (換動作/換視角)"
 is_layout_mode = mode == "分鏡保留模式 (換人/換場景)"
+is_character_mode = mode == "角色設計模式 (三視圖/設定集)"
 is_normal_mode = mode == "一般生成模式 (從零開始)"
 
 if is_normal_mode:
@@ -240,7 +232,8 @@ elif is_remake_mode:
     st.info("**畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
 elif is_layout_mode:
     st.info("**分鏡保留模式**：鎖定參考圖 [Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
-
+elif is_character_mode:
+    st.info("**角色設計模式**：為指定主角生成包含「全身多角度」與「臉部特寫」的專業 8 格角色設定圖。")
 
 # --- 【第一區：核心內容】 ---
 st.markdown("<div class='section-header'>畫面核心內容 (Who, Doing What, Where)</div>", unsafe_allow_html=True)
@@ -260,18 +253,35 @@ with col_text1:
     user_keyword = st.text_input(subj_label, value=subj_val, disabled=subj_disabled, help=subj_help, placeholder="例如: 一位台灣男性")
 
 with col_text2:
-    act_help = "若留白，將維持原動作與姿勢" if (is_remake_mode or is_layout_mode) else "(可在此定義面向與表情) 非必填"
+    if is_character_mode:
+        act_help = "角色設定圖通常為站姿，可留白或描述服飾狀態。"
+        act_val = "standing naturally"
+    else:
+        act_help = "若留白，將維持原動作與姿勢" if (is_remake_mode or is_layout_mode) else "(可在此定義面向與表情) 非必填"
+        act_val = "" if (is_remake_mode or is_layout_mode) else "看向窗外，手裡拿著咖啡，神情放鬆"
+        
     user_action = st.text_input(
         "主角動作 (Doing What)", 
-        value="" if (is_remake_mode or is_layout_mode) else "看向窗外，手裡拿著咖啡，神情放鬆", 
+        value=act_val, 
         placeholder="例如：看向窗外，手裡拿著咖啡，燦爛微笑", 
         help=act_help
     )
 
 with col_text3:
-    bg_help = "若留白，將維持原場景" if (is_remake_mode or is_layout_mode) else "*必填"
-    bg_value = "" if (is_remake_mode or is_layout_mode) else "陽光明媚的現代咖啡廳"
-    user_background = st.text_input("背景場景 (Where)", value=bg_value, placeholder="例如: 夜晚的東京街頭", help=bg_help)
+    # ⭐ 角色模式不再鎖定背景
+    bg_label = "背景場景 (Where)"
+    
+    if is_remake_mode or is_layout_mode:
+        bg_help = "若留白，將維持原場景"
+        bg_value = ""
+    elif is_character_mode:
+        bg_help = "可自訂場景。若留白，將預設為乾淨純色背景"
+        bg_value = ""
+    else:
+        bg_help = "*必填"
+        bg_value = "陽光明媚的現代咖啡廳"
+        
+    user_background = st.text_input(bg_label, value=bg_value, placeholder="例如: 乾淨的純色背景 或 夜晚的東京街頭", help=bg_help)
 
 
 # --- 【第二區：參考圖數量對應與連動】 ---
@@ -284,12 +294,12 @@ st.info(
     "3. 絕對**不能有浮水印或壓字**，否則浮水印會被 AI 學習並出現在生成結果中。"
 )
 
-if is_normal_mode:
+if is_normal_mode or is_character_mode:
     st.warning("**排序提醒：** 請依照下方 **「人物 ➔ 物件 ➔ 場景 ➔ 光線」的順序上傳**，否則 [Image X] 的編號會對不起來！")
 else:
     st.warning("**排序提醒：** 模式已鎖定第一張為主圖。上傳順序必須是 **主參考圖(必為第1張) ➔ 人物(若有) ➔ 物件(若有) ➔ 場景(若有) ➔ 光線(若有)**。")
 
-img_counter = 2 if not is_normal_mode else 1 
+img_counter = 2 if (is_remake_mode or is_layout_mode) else 1 
 ref_prompts =[] 
 custom_light_prompt = ""
 use_light_ref = False
@@ -298,8 +308,12 @@ is_also_style_ref = False
 col_ref1, col_ref2, col_ref3, col_ref4 = st.columns(4)
 
 with col_ref1:
-    use_char_ref = st.checkbox("啟用人物參考圖")
-    if use_char_ref:
+    if is_normal_mode or is_layout_mode:
+        char_ref_type = st.selectbox("人物參考來源",["不使用", "一般人物參考圖 (可選部位)", "角色設定圖 (完整複製外貌服裝)"])
+    else:
+        char_ref_type = "一般人物參考圖 (可選部位)" if st.checkbox("啟用人物參考圖") else "不使用"
+
+    if char_ref_type == "一般人物參考圖 (可選部位)":
         char_count = st.number_input("輸入人物參考圖數量", min_value=1, max_value=10, value=1, step=1)
         char_parts = st.multiselect("請選擇要參考的部位 (可複選)",["臉部特徵 (Face)", "服裝穿搭 (Clothing)", "眼鏡 (Glasses)", "帽子 (Hat)"])
         custom_parts = st.text_input("自定義參考部位 (選填)", placeholder="例如: 手錶 項鍊 (請用空白鍵隔開)", help="將會自動轉成英文標籤")
@@ -317,6 +331,13 @@ with col_ref1:
         parts_str = f" for {' and '.join(selected_parts)}" if selected_parts else ""
         joined_char_labels = " and ".join(char_labels)
         ref_prompts.append(f"referencing character details from {joined_char_labels}{parts_str}")
+        
+    elif char_ref_type == "角色設定圖 (完整複製外貌服裝)":
+        char_count = st.number_input("輸入角色圖數量", min_value=1, max_value=10, value=1, step=1)
+        char_labels =[f"[Image {i}]" for i in range(img_counter, img_counter + char_count)]
+        img_counter += char_count
+        joined_char_labels = " and ".join(char_labels)
+        ref_prompts.append(f"perfectly preserving the exact character appearance, facial features, hairstyle, and full clothing from {joined_char_labels}")
 
 with col_ref2:
     use_obj_ref = st.checkbox("啟用物件參考圖")
@@ -336,20 +357,21 @@ with col_ref3:
         scene_count = st.number_input("輸入場景參考圖數量", min_value=1, max_value=10, value=1, step=1)
         scene_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + scene_count)]
         img_counter += scene_count 
-        
         joined_scene_labels = " and ".join(scene_labels)
         ref_prompts.append(f"referencing background scene from {joined_scene_labels}")
 
 with col_ref4:
     if is_remake_mode:
-        st.checkbox("光線與色調參考圖 🔒 [重構模式已鎖定]", value=False, disabled=True)
+        st.checkbox("光線與色調 🔒 [重構模式已鎖定]", value=False, disabled=True)
+    elif is_character_mode:
+        st.checkbox("光線與色調 🔒[角色模式已鎖定]", value=False, disabled=True, help="角色設定圖將強制使用棚拍自然光設定。")
     else:
         use_light_ref = st.checkbox("啟用光線與色調參考圖", help="若使用「真實照片」作為光線參考，生成的逼真度與質感效果會最佳！")
         if use_light_ref:
             light_count = st.number_input("輸入光線參考圖數量", min_value=1, max_value=10, value=1, step=1)
             is_also_style_ref = st.checkbox("同時作為「視覺風格」參考圖")
             
-            info_msg = f"鎖定「光線與色調」選單，並佔用 {light_count} 個 Image 編號。"
+            info_msg = f"鎖定「光線與色調」選單，佔用 {light_count} 個 Image 編號。"
             if is_also_style_ref:
                 info_msg = f"鎖定「視覺風格」與「光線」選單，佔用 {light_count} 個 Image 編號。"
             st.info(info_msg)
@@ -368,32 +390,30 @@ with col_ref4:
 st.markdown("<div class='section-header'>攝影與風格控制</div>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
 
-camera_disabled = is_layout_mode
+camera_disabled = is_layout_mode or is_character_mode
 
 with col1:
-    style_label = "視覺風格 🔒 [由參考圖決定]" if (is_remake_mode or is_also_style_ref) else "視覺風格"
+    style_label = "視覺風格 🔒 [模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
     style_choice = st.selectbox(
-        style_label, 
-        ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
-        disabled=is_remake_mode or is_also_style_ref
+        style_label,["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
+        disabled=is_remake_mode or is_also_style_ref or is_character_mode
     )
     
-    light_label = "光線與色調 🔒 [由參考圖決定]" if (use_light_ref or is_remake_mode) else "光線與色調"
+    light_label = "光線與色調 🔒 [模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
     light_choice = st.selectbox(
-        light_label,
-        ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
-        disabled=use_light_ref or is_remake_mode
+        light_label,["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
+        disabled=use_light_ref or is_remake_mode or is_character_mode
     )
 
 with col2:
-    shot_label = "鏡頭大小 🔒 [分鏡已鎖定]" if camera_disabled else "鏡頭大小"
-    shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled, help="分鏡保留模式下將鎖定為原圖視角" if camera_disabled else "")
+    shot_label = "鏡頭大小 🔒[模式已鎖定]" if camera_disabled else "鏡頭大小"
+    shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled)
     
-    angle_label = "鏡頭角度 🔒 [分鏡已鎖定]" if camera_disabled else "鏡頭角度"
+    angle_label = "鏡頭角度 🔒[模式已鎖定]" if camera_disabled else "鏡頭角度"
     angle_choice = st.selectbox(angle_label, list(dict_angle.keys()), disabled=camera_disabled)
 
 with col3:
-    pos_label = "鏡頭位置 🔒 [分鏡已鎖定]" if camera_disabled else "鏡頭位置"
+    pos_label = "鏡頭位置 🔒 [模式已鎖定]" if camera_disabled else "鏡頭位置"
     position_choice = st.selectbox(pos_label, list(dict_position.keys()), disabled=camera_disabled)
     
     if not camera_disabled:
@@ -406,7 +426,16 @@ with col3:
         """, unsafe_allow_html=True)
         st.caption("*( 人像下方為正前方 )*")
     
-    ratio_choice = st.selectbox("畫面比例", list(dict_ratio.keys()))
+    if is_character_mode:
+        ratio_label = "畫面比例 🔒[模式已鎖定]"
+        ratio_options =["橫式簡報滿版 (16:9)"]
+        ratio_disabled = True
+    else:
+        ratio_label = "畫面比例"
+        ratio_options = list(dict_ratio.keys())
+        ratio_disabled = False
+
+    ratio_choice = st.selectbox(ratio_label, ratio_options, disabled=ratio_disabled)
     append_ratio = st.checkbox("將比例標籤加入提示詞結尾", value=False)
 
 
@@ -449,23 +478,23 @@ if conflicts:
 
 if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_container_width=True):
     
-    if is_normal_mode and (user_keyword.strip() == "" or user_background.strip() == ""):
-        st.error("一般模式下，請確實填寫「畫面主角」與「背景場景」！")
+    if (is_normal_mode or is_character_mode) and user_keyword.strip() == "":
+        st.error("請確實填寫「畫面主角」！")
     else:
         custom_neg_tags = ""
         if user_negative.strip() != "":
             word_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
+            
+        if is_character_mode:
+            custom_neg_tags = "3d render, octane render, cgi, " + custom_neg_tags if custom_neg_tags else "3d render, octane render, cgi"
 
-        # ⭐ 修正所有 of [Image 1] (確保完全有空格)
         if is_remake_mode:
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
-            
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
                 base_prompt += ", maintaining the exact pose and posture of [Image 1]"
-                
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
@@ -474,29 +503,40 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
 
         elif is_layout_mode:
             base_prompt = "maintaining the exact camera angle, shot size, and composition of [Image 1]"
-            
             if user_keyword.strip():
                 base_prompt += f", changing subject to: {user_keyword.strip()}"
             else:
                 base_prompt += ", maintaining the exact subject of [Image 1]"
-                
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
-                
+                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
-            
             if style_choice != "維持原圖風格" and not is_also_style_ref:
                 base_prompt += f", changing style to: {dict_style[style_choice]}"
-            
             if use_light_ref:
                 base_prompt += f", {custom_light_prompt}"
             elif light_choice != "維持原圖光影":
                 base_prompt += f", changing lighting to: {dict_light[light_choice]}"
 
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
+
+        elif is_character_mode:
+            subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
+            # ⭐ 角色模式不再預設強制純色背景，改為使用者填寫
+            bg_str = f"in {user_background.strip()}" if user_background.strip() else "clean solid background"
+            
+            char_sheet_template = (
+                f"Create a photographic character reference sheet for {subject_and_action}. "
+                "Divide the sheet into four different vertical columns, each representing a different angle, for a total of eight shots. "
+                "The entire top row must show full-body views from head to toe facing four different directions: the front, the side, a three-quarter view, and the back. "
+                "All subjects in the top row must be fully visible including feet, with no cropping at the ankles, knees, or head. "
+                "The bottom row must contain four close-up shots of the face (including front and profile views) corresponding to each of the full-body shots above. "
+                f"{bg_str}. "
+                "The style must be photorealistic, life-like, live action shot on a DSLR camera with 35mm film and muted color tones. Do not make it look like a 3D render"
+            )
+            final_prompt = char_sheet_template + ", " + ", ".join(ref_prompts) if ref_prompts else char_sheet_template
 
         else:
             subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
@@ -520,11 +560,15 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
         st.success("成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("**請將滑鼠移至下方黑框的右上角，點擊出現的複製圖示即可一鍵全選複製**")
         
-        if custom_neg_tags:
-            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{custom_neg_tags}"
+        if custom_neg_tags or base_negative:
+            final_neg = f"{custom_neg_tags}, {base_negative}" if (not is_character_mode and custom_neg_tags) else (base_negative if not is_character_mode else custom_neg_tags)
+            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{final_neg}"
         else:
             combined_output = f"{final_prompt}"
             
         st.code(combined_output, language="text")
         
-        st.info(f"**【尺寸參數設定建議】** 寬度：`{1920 if '16:9' in ratio_choice else (1080 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1440 if '4:3' in ratio_choice else (1080 if '3:4' in ratio_choice else 2560))))}`px ｜ 高度：`{1080 if '16:9' in ratio_choice else (1920 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1080 if '4:3' in ratio_choice else (1440 if '3:4' in ratio_choice else 1080))))}`px")
+        suggested_w = 1920 if (is_character_mode or '16:9' in ratio_choice) else (1080 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1440 if '4:3' in ratio_choice else (1080 if '3:4' in ratio_choice else 2560))))
+        suggested_h = 1080 if (is_character_mode or '16:9' in ratio_choice) else (1920 if '9:16' in ratio_choice else (1024 if '1:1' in ratio_choice else (1080 if '4:3' in ratio_choice else (1440 if '3:4' in ratio_choice else 1080))))
+        
+        st.info(f"**【尺寸參數設定建議】** 寬度：`{suggested_w}`px ｜ 高度：`{suggested_h}`px" + (" *(角色設定圖強制建議使用橫式比例)*" if is_character_mode else ""))
