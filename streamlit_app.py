@@ -16,7 +16,7 @@ custom_css = """
         color: #f8fafc;
     }
 
-    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    [data-testid="stAppViewContainer"],[data-testid="stHeader"] {
         background-color: transparent !important;
     }
     
@@ -143,7 +143,6 @@ if not st.session_state.authenticated:
 # ==================== 3. 字典定義區 ====================
 base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
-# ⭐ 更新為「寫實風格感」與最新的綜合提示詞
 dict_style = {
     "寫實風格感": "photorealistic, life-like, live action shot on a DSLR camera with 35mm film and muted color tones, delicate midtone detail, subtle film grain, crisp but not overly sharpened, refined texture clarity", 
     "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
@@ -191,12 +190,14 @@ dict_position_map = {
     "第一人稱視角 (POV)": "▫️ ▫️ ▫️<br>▫️ 👀 ▫️<br>▫️ ▫️ ▫️"
 }
 
+# ⭐ 新增「清冷藍調 (冷色溫)」選項
 dict_light = {
     "白天自然光": "natural light, sunlight", 
     "黃昏日落暖光 (Magic hour)": "golden hour, sunset lighting", 
     "夜晚": "night, ambient lighting", 
     "棚拍柔光": "soft diffused light, even illumination, flawless lighting, gentle shadows", 
     "高反差戲劇光": "dramatic lighting, high contrast", 
+    "清冷藍調 (冷色溫)": "cool color temperature, bluish tint, cold lighting, cool color grading, cinematic cool tones",
     "冷色科技光": "cool tone, blue and teal lighting"
 }
 
@@ -212,7 +213,7 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.markdown("<h1 class='main-title'>AI 圖片提示詞生成器</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 引擎打造。</p>", unsafe_allow_html=True)
 
 # --- 【全新模式切換器】 ---
 st.markdown("<div class='section-header'>選擇產圖模式</div>", unsafe_allow_html=True)
@@ -230,7 +231,7 @@ is_normal_mode = mode == "一般生成模式 (從零開始)"
 if is_normal_mode:
     st.info("**一般生成模式**：不需參考圖，直接透過文字指令生成全新的畫面。")
 elif is_remake_mode:
-    st.info("**畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
+    st.info("**畫面重構模式**：繼承參考圖[Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
 elif is_layout_mode:
     st.info("**分鏡保留模式**：鎖定參考圖 [Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
 elif is_character_mode:
@@ -242,7 +243,7 @@ col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
     if is_remake_mode:
-        subj_label = "畫面主角 (Who) 🔒[重構模式已鎖定]"
+        subj_label = "畫面主角 (Who) 🔒 [重構模式已鎖定]"
         subj_val = "同主參考圖主角"
         subj_disabled = True
     else:
@@ -362,7 +363,7 @@ with col_ref3:
 
 with col_ref4:
     if is_remake_mode:
-        st.checkbox("光線與色調 🔒 [重構模式已鎖定]", value=False, disabled=True)
+        st.checkbox("光線與色調 🔒[重構模式已鎖定]", value=False, disabled=True)
     elif is_character_mode:
         st.checkbox("光線與色調 🔒[角色模式已鎖定]", value=False, disabled=True, help="角色設定圖將強制使用棚拍自然光設定。")
     else:
@@ -393,14 +394,14 @@ col1, col2, col3 = st.columns(3)
 camera_disabled = is_layout_mode or is_character_mode
 
 with col1:
-    style_label = "視覺風格 🔒[模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
+    style_label = "視覺風格 🔒 [模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
     style_choice = st.selectbox(
         style_label, 
         ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
         disabled=is_remake_mode or is_also_style_ref or is_character_mode
     )
     
-    light_label = "光線與色調 🔒[模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
+    light_label = "光線與色調 🔒 [模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
     light_choice = st.selectbox(
         light_label,
         ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
@@ -408,14 +409,14 @@ with col1:
     )
 
 with col2:
-    shot_label = "鏡頭大小 🔒 [模式已鎖定]" if camera_disabled else "鏡頭大小"
+    shot_label = "鏡頭大小 🔒[模式已鎖定]" if camera_disabled else "鏡頭大小"
     shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled)
     
-    angle_label = "鏡頭角度 🔒 [模式已鎖定]" if camera_disabled else "鏡頭角度"
+    angle_label = "鏡頭角度 🔒[模式已鎖定]" if camera_disabled else "鏡頭角度"
     angle_choice = st.selectbox(angle_label, list(dict_angle.keys()), disabled=camera_disabled)
 
 with col3:
-    pos_label = "鏡頭位置 🔒[模式已鎖定]" if camera_disabled else "鏡頭位置"
+    pos_label = "鏡頭位置 🔒 [模式已鎖定]" if camera_disabled else "鏡頭位置"
     position_choice = st.selectbox(pos_label, list(dict_position.keys()), disabled=camera_disabled)
     
     if not camera_disabled:
@@ -496,7 +497,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
