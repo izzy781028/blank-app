@@ -14,9 +14,7 @@ custom_css = """
         background: linear-gradient(135deg, #0f172a 0%, #09090b 50%, #1e1b4b 100%);
         background-attachment: fixed;
         color: #f8fafc;
-    }
-
-    [data-testid="stAppViewContainer"],[data-testid="stHeader"] {
+    }[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: transparent !important;
     }
     
@@ -46,9 +44,7 @@ custom_css = """
         padding-left: 12px;
         border-left: 6px solid #4F46E5;
         letter-spacing: 0.5px;
-    }
-
-    [data-testid="stAlert"] {
+    }[data-testid="stAlert"] {
         border-radius: 12px;
         border: none;
         background-color: rgba(255, 255, 255, 0.05) !important;
@@ -141,9 +137,10 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
+base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
 dict_style = {
-    "寫實商業攝影": "clean commercial photography, natural high-end realism, soft cinematic realism, muted saturation, balanced dynamic range, smooth highlight roll-off, gentle tonal separation, delicate midtone detail, subtle film grain, organic tonal response, crisp but not overly sharpened, refined texture clarity, smooth tonal gradation", 
+    "寫實風格感": "photorealistic, life-like, live action shot on a DSLR camera with 35mm film and muted color tones, delicate midtone detail, subtle film grain, crisp but not overly sharpened, refined texture clarity", 
     "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
     "科技未來感": "cyberpunk, sci-fi, futuristic, glowing neon lights, intricate mechanical details", 
     "溫暖生活感": "warm lifestyle, slice of life, cozy atmosphere, candid photography", 
@@ -195,6 +192,7 @@ dict_light = {
     "夜晚": "night, ambient lighting", 
     "棚拍柔光": "soft diffused light, even illumination, flawless lighting, gentle shadows", 
     "高反差戲劇光": "dramatic lighting, high contrast", 
+    "清冷藍調 (冷色溫)": "cool color temperature, bluish tint, cold lighting, cool color grading, cinematic cool tones",
     "冷色科技光": "cool tone, blue and teal lighting"
 }
 
@@ -210,7 +208,7 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.markdown("<h1 class='main-title'>AI 圖片提示詞生成器</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 引擎打造。</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。</p>", unsafe_allow_html=True)
 
 # --- 【全新模式切換器】 ---
 st.markdown("<div class='section-header'>選擇產圖模式</div>", unsafe_allow_html=True)
@@ -273,7 +271,8 @@ with col_text3:
         bg_help = "若留白，將維持原場景"
         bg_value = ""
     elif is_character_mode:
-        bg_help = "可自訂場景。若留白，將預設為乾淨純色背景"
+        # ⭐ 更新背景輸入提示：加入場景參考圖的條件說明
+        bg_help = "可自訂場景。若留白且「未使用」場景參考圖，將預設為乾淨純白背景"
         bg_value = ""
     else:
         bg_help = "*必填"
@@ -301,6 +300,7 @@ img_counter = 2 if (is_remake_mode or is_layout_mode) else 1
 ref_prompts =[] 
 custom_light_prompt = ""
 use_light_ref = False
+use_scene_ref = False # 確保全域變數存在
 is_also_style_ref = False 
 
 col_ref1, col_ref2, col_ref3, col_ref4 = st.columns(4)
@@ -360,7 +360,7 @@ with col_ref3:
 
 with col_ref4:
     if is_remake_mode:
-        st.checkbox("光線與色調 🔒 [重構模式已鎖定]", value=False, disabled=True)
+        st.checkbox("光線與色調 🔒[重構模式已鎖定]", value=False, disabled=True)
     elif is_character_mode:
         st.checkbox("光線與色調 🔒 [角色模式已鎖定]", value=False, disabled=True, help="角色設定圖將強制使用棚拍自然光設定。")
     else:
@@ -393,21 +393,23 @@ camera_disabled = is_layout_mode or is_character_mode
 with col1:
     style_label = "視覺風格 🔒 [模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
     style_choice = st.selectbox(
-        style_label,["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
+        style_label, 
+        ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
         disabled=is_remake_mode or is_also_style_ref or is_character_mode
     )
     
     light_label = "光線與色調 🔒 [模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
     light_choice = st.selectbox(
-        light_label,["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
+        light_label,
+        ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
         disabled=use_light_ref or is_remake_mode or is_character_mode
     )
 
 with col2:
-    shot_label = "鏡頭大小 🔒 [模式已鎖定]" if camera_disabled else "鏡頭大小"
+    shot_label = "鏡頭大小 🔒[模式已鎖定]" if camera_disabled else "鏡頭大小"
     shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled)
     
-    angle_label = "鏡頭角度 🔒 [模式已鎖定]" if camera_disabled else "鏡頭角度"
+    angle_label = "鏡頭角度 🔒[模式已鎖定]" if camera_disabled else "鏡頭角度"
     angle_choice = st.selectbox(angle_label, list(dict_angle.keys()), disabled=camera_disabled)
 
 with col3:
@@ -479,24 +481,20 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
     if (is_normal_mode or is_character_mode) and user_keyword.strip() == "":
         st.error("請確實填寫「畫面主角」！")
     else:
-        # ⭐ 乾淨的負面提示詞邏輯 (完全依賴使用者輸入，不加 base_negative)
-        user_neg_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
-        
-        # 角色模式強制加入特定的防護詞
-        if is_character_mode:
-            char_mode_neg_tags = ["text", "3d render", "octane render", "cgi"]
-            # 將系統防護詞加到使用者輸入的前面
-            user_neg_list = char_mode_neg_tags + user_neg_list
+        custom_neg_tags = ""
+        if user_negative.strip() != "":
+            word_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
+            custom_neg_tags = ", ".join(word_list)
             
-        final_negative_prompt = ", ".join(user_neg_list)
+        if is_character_mode:
+            custom_neg_tags = "text, 3d render, octane render, cgi, " + custom_neg_tags if custom_neg_tags else "text, 3d render, octane render, cgi"
 
-        #[處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
@@ -512,7 +510,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
             
@@ -528,7 +526,14 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
 
         elif is_character_mode:
             subject_and_action = f"{user_keyword}, {user_action}" if user_action.strip() else f"{user_keyword}"
-            bg_str = f"in {user_background.strip()}" if user_background.strip() else "clean solid white background"
+            
+            # ⭐ 角色模式背景動態判斷 (手動輸入優先 > 場景參考圖 > 預設白底)
+            if user_background.strip():
+                bg_str = f"in {user_background.strip()}. "
+            elif use_scene_ref:
+                bg_str = ""  # 若有場景參考圖且無手動輸入，則完全留空讓參考圖發揮
+            else:
+                bg_str = "clean solid white background. "
             
             char_sheet_template = (
                 f"Create a photographic character reference sheet for {subject_and_action}. "
@@ -536,7 +541,7 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
                 "The entire top row must show full-body views from head to toe facing four different directions: the front, the side, a three-quarter view, and the back. "
                 "All subjects in the top row must be fully visible including feet, with no cropping at the ankles, knees, or head. "
                 "The bottom row must contain four close-up shots of the face (including front and profile views) corresponding to each of the full-body shots above. "
-                f"{bg_str}. "
+                f"{bg_str}"
                 "The style must be photorealistic, life-like, live action shot on a DSLR camera with 35mm film and muted color tones. Do not make it look like a 3D render"
             )
             final_prompt = char_sheet_template + ", " + ", ".join(ref_prompts) if ref_prompts else char_sheet_template
@@ -557,17 +562,15 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             )
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
-        # (已完全移除 base_quality)
-
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
 
         st.success("成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("**請將滑鼠移至下方黑框的右上角，點擊出現的複製圖示即可一鍵全選複製**")
         
-        # ⭐ 只有當有負面提示詞時才顯示 Negative Prompt 區塊
-        if final_negative_prompt:
-            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{final_negative_prompt}"
+        if custom_neg_tags or base_negative:
+            final_neg = f"{custom_neg_tags}, {base_negative}" if (not is_character_mode and custom_neg_tags) else (base_negative if not is_character_mode else custom_neg_tags)
+            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{final_neg}"
         else:
             combined_output = f"{final_prompt}"
             
