@@ -16,7 +16,7 @@ custom_css = """
         color: #f8fafc;
     }
 
-    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    [data-testid="stAppViewContainer"],[data-testid="stHeader"] {
         background-color: transparent !important;
     }
     
@@ -141,10 +141,9 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
-base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
 dict_style = {
-    "寫實風格感": "photorealistic, life-like, live action shot on a DSLR camera with 35mm film and muted color tones, delicate midtone detail, subtle film grain, crisp but not overly sharpened, refined texture clarity", 
+    "寫實商業攝影": "clean commercial photography, natural high-end realism, soft cinematic realism, muted saturation, balanced dynamic range, smooth highlight roll-off, gentle tonal separation, delicate midtone detail, subtle film grain, organic tonal response, crisp but not overly sharpened, refined texture clarity, smooth tonal gradation", 
     "高級精品感": "high-end luxury, editorial fashion photography, sleek, sophisticated", 
     "科技未來感": "cyberpunk, sci-fi, futuristic, glowing neon lights, intricate mechanical details", 
     "溫暖生活感": "warm lifestyle, slice of life, cozy atmosphere, candid photography", 
@@ -196,7 +195,6 @@ dict_light = {
     "夜晚": "night, ambient lighting", 
     "棚拍柔光": "soft diffused light, even illumination, flawless lighting, gentle shadows", 
     "高反差戲劇光": "dramatic lighting, high contrast", 
-    "清冷藍調 (冷色溫)": "cool color temperature, bluish tint, cold lighting, cool color grading, cinematic cool tones",
     "冷色科技光": "cool tone, blue and teal lighting"
 }
 
@@ -212,7 +210,7 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.markdown("<h1 class='main-title'>AI 圖片提示詞生成器</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 引擎打造。</p>", unsafe_allow_html=True)
 
 # --- 【全新模式切換器】 ---
 st.markdown("<div class='section-header'>選擇產圖模式</div>", unsafe_allow_html=True)
@@ -232,7 +230,7 @@ if is_normal_mode:
 elif is_remake_mode:
     st.info("**畫面重構模式**：繼承參考圖 [Image 1] 的主角外貌與光影。您可以修改動作、場景，並強制更改鏡頭視角。")
 elif is_layout_mode:
-    st.info("**分鏡保留模式**：鎖定參考圖[Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
+    st.info("**分鏡保留模式**：鎖定參考圖 [Image 1] 的所有攝影機位置與構圖。您可以將畫面的主角、動作、背景或光線換掉。")
 elif is_character_mode:
     st.info("**角色設計模式**：為指定主角生成包含「全身多角度」與「臉部特寫」的專業 8 格角色設定圖。")
 
@@ -242,7 +240,7 @@ col_text1, col_text2, col_text3 = st.columns(3)
 
 with col_text1:
     if is_remake_mode:
-        subj_label = "畫面主角 (Who) 🔒[重構模式已鎖定]"
+        subj_label = "畫面主角 (Who) 🔒 [重構模式已鎖定]"
         subj_val = "同主參考圖主角"
         subj_disabled = True
     else:
@@ -315,14 +313,12 @@ with col_ref1:
 
     if char_ref_type == "一般人物參考圖 (可選部位)":
         char_count = st.number_input("輸入人物參考圖數量", min_value=1, max_value=10, value=1, step=1)
-        # ⭐ 補回髮型的選項
         char_parts = st.multiselect("請選擇要參考的部位 (可複選)",["臉部特徵 (Face)", "髮型 (Hairstyle)", "服裝穿搭 (Clothing)", "眼鏡 (Glasses)", "帽子 (Hat)"])
         custom_parts = st.text_input("自定義參考部位 (選填)", placeholder="例如: 手錶 項鍊 (請用空白鍵隔開)", help="將會自動轉成英文標籤")
         
         char_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + char_count)]
         img_counter += char_count 
         
-        # ⭐ 補回髮型的對應
         parts_map = {"臉部特徵 (Face)": "face", "髮型 (Hairstyle)": "hairstyle", "服裝穿搭 (Clothing)": "clothing", "眼鏡 (Glasses)": "glasses", "帽子 (Hat)": "hat"}
         selected_parts =[parts_map[p] for p in char_parts]
         
@@ -357,7 +353,7 @@ with col_ref3:
     use_scene_ref = st.checkbox("啟用場景參考圖")
     if use_scene_ref:
         scene_count = st.number_input("輸入場景參考圖數量", min_value=1, max_value=10, value=1, step=1)
-        scene_labels =[f"[Image {i}]" for i in range(img_counter, img_counter + scene_count)]
+        scene_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + scene_count)]
         img_counter += scene_count 
         joined_scene_labels = " and ".join(scene_labels)
         ref_prompts.append(f"referencing background scene from {joined_scene_labels}")
@@ -366,7 +362,7 @@ with col_ref4:
     if is_remake_mode:
         st.checkbox("光線與色調 🔒 [重構模式已鎖定]", value=False, disabled=True)
     elif is_character_mode:
-        st.checkbox("光線與色調 🔒[角色模式已鎖定]", value=False, disabled=True, help="角色設定圖將強制使用棚拍自然光設定。")
+        st.checkbox("光線與色調 🔒 [角色模式已鎖定]", value=False, disabled=True, help="角色設定圖將強制使用棚拍自然光設定。")
     else:
         use_light_ref = st.checkbox("啟用光線與色調參考圖", help="若使用「真實照片」作為光線參考，生成的逼真度與質感效果會最佳！")
         if use_light_ref:
@@ -408,14 +404,14 @@ with col1:
     )
 
 with col2:
-    shot_label = "鏡頭大小 🔒[模式已鎖定]" if camera_disabled else "鏡頭大小"
+    shot_label = "鏡頭大小 🔒 [模式已鎖定]" if camera_disabled else "鏡頭大小"
     shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled)
     
-    angle_label = "鏡頭角度 🔒[模式已鎖定]" if camera_disabled else "鏡頭角度"
+    angle_label = "鏡頭角度 🔒 [模式已鎖定]" if camera_disabled else "鏡頭角度"
     angle_choice = st.selectbox(angle_label, list(dict_angle.keys()), disabled=camera_disabled)
 
 with col3:
-    pos_label = "鏡頭位置 🔒[模式已鎖定]" if camera_disabled else "鏡頭位置"
+    pos_label = "鏡頭位置 🔒 [模式已鎖定]" if camera_disabled else "鏡頭位置"
     position_choice = st.selectbox(pos_label, list(dict_position.keys()), disabled=camera_disabled)
     
     if not camera_disabled:
@@ -429,7 +425,7 @@ with col3:
         st.caption("*( 人像下方為正前方 )*")
     
     if is_character_mode:
-        ratio_label = "畫面比例 🔒[模式已鎖定]"
+        ratio_label = "畫面比例 🔒 [模式已鎖定]"
         ratio_options =["橫式簡報滿版 (16:9)"]
         ratio_disabled = True
     else:
@@ -483,14 +479,18 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
     if (is_normal_mode or is_character_mode) and user_keyword.strip() == "":
         st.error("請確實填寫「畫面主角」！")
     else:
-        custom_neg_tags = ""
-        if user_negative.strip() != "":
-            word_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
-            custom_neg_tags = ", ".join(word_list)
-            
+        # ⭐ 乾淨的負面提示詞邏輯 (完全依賴使用者輸入，不加 base_negative)
+        user_neg_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
+        
+        # 角色模式強制加入特定的防護詞
         if is_character_mode:
-            custom_neg_tags = "3d render, octane render, cgi, " + custom_neg_tags if custom_neg_tags else "3d render, octane render, cgi"
+            char_mode_neg_tags = ["text", "3d render", "octane render", "cgi"]
+            # 將系統防護詞加到使用者輸入的前面
+            user_neg_list = char_mode_neg_tags + user_neg_list
+            
+        final_negative_prompt = ", ".join(user_neg_list)
 
+        #[處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             if user_action.strip():
@@ -557,15 +557,17 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             )
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
+        # (已完全移除 base_quality)
+
         if append_ratio:
             final_prompt += f", {dict_ratio[ratio_choice]}"
 
         st.success("成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("**請將滑鼠移至下方黑框的右上角，點擊出現的複製圖示即可一鍵全選複製**")
         
-        if custom_neg_tags or base_negative:
-            final_neg = f"{custom_neg_tags}, {base_negative}" if (not is_character_mode and custom_neg_tags) else (base_negative if not is_character_mode else custom_neg_tags)
-            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{final_neg}"
+        # ⭐ 只有當有負面提示詞時才顯示 Negative Prompt 區塊
+        if final_negative_prompt:
+            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{final_negative_prompt}"
         else:
             combined_output = f"{final_prompt}"
             
