@@ -14,7 +14,9 @@ custom_css = """
         background: linear-gradient(135deg, #0f172a 0%, #09090b 50%, #1e1b4b 100%);
         background-attachment: fixed;
         color: #f8fafc;
-    }[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    }
+
+    [data-testid="stAppViewContainer"],[data-testid="stHeader"] {
         background-color: transparent !important;
     }
     
@@ -44,7 +46,9 @@ custom_css = """
         padding-left: 12px;
         border-left: 6px solid #4F46E5;
         letter-spacing: 0.5px;
-    }[data-testid="stAlert"] {
+    }
+
+    [data-testid="stAlert"] {
         border-radius: 12px;
         border: none;
         background-color: rgba(255, 255, 255, 0.05) !important;
@@ -137,6 +141,7 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== 3. 字典定義區 ====================
+base_negative = "ugly, deformed, blurry, poor details, bad anatomy, worst quality, low quality, jpeg artifacts, overexposed, underexposed"
 
 dict_style = {
     "寫實風格感": "photorealistic, life-like, live action shot on a DSLR camera with 35mm film and muted color tones, delicate midtone detail, subtle film grain, crisp but not overly sharpened, refined texture clarity", 
@@ -156,7 +161,6 @@ dict_angle = {
     "平視 (Eye Level)": "eye-level angle, straight-on", 
     "仰視 (Low Angle - 攝影機在下)": "low angle shot, shot from below, camera pointing upward", 
     "俯視 (High Angle - 攝影機在上)": "high angle shot, shot from above, downward angle", 
-    "頂視 / 鳥瞰 (Top-Down - 正上方往下拍)": "top-down view, shot from directly above",
     "傾斜荷蘭角 (Dutch Angle)": "dutch angle, tilted frame"
 }
 
@@ -209,7 +213,7 @@ dict_ratio = {
 # ==================== 4. UI 介面設計 ====================
 
 st.markdown("<h1 class='main-title'>AI 圖片提示詞生成器</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 引擎打造。</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>精準控制畫面分鏡，專為 Nano Banana 2 🍌 引擎打造。</p>", unsafe_allow_html=True)
 
 # --- 【全新模式切換器】 ---
 st.markdown("<div class='section-header'>選擇產圖模式</div>", unsafe_allow_html=True)
@@ -316,7 +320,19 @@ with col_ref1:
         char_parts = st.multiselect("請選擇要參考的部位 (可複選)",["臉部特徵 (Face)", "髮型 (Hairstyle)", "服裝穿搭 (Clothing)", "眼鏡 (Glasses)", "帽子 (Hat)"])
         custom_parts = st.text_input("自定義參考部位 (選填)", placeholder="例如: 手錶 項鍊 (請用空白鍵隔開)", help="將會自動轉成英文標籤")
         
-        char_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + char_count)]
+        # ⭐ 多人角色指定邏輯
+        char_labels =[]
+        if char_count > 1:
+            st.markdown("<div style='font-size:0.85rem; color:#9ca3af; margin-top:5px; margin-bottom:5px;'>👥 多張參考圖可分別指定角色：</div>", unsafe_allow_html=True)
+            
+        for i in range(img_counter, img_counter + char_count):
+            if char_count > 1:
+                desc = st.text_input(f"↳ [Image {i}] 對應角色 (選填)", key=f"char_gen_{i}", placeholder="例如: 左邊的男生")
+                label = f"[Image {i}] as {desc.strip()}" if desc.strip() else f"[Image {i}]"
+                char_labels.append(label)
+            else:
+                char_labels.append(f"[Image {i}]")
+                
         img_counter += char_count 
         
         parts_map = {"臉部特徵 (Face)": "face", "髮型 (Hairstyle)": "hairstyle", "服裝穿搭 (Clothing)": "clothing", "眼鏡 (Glasses)": "glasses", "帽子 (Hat)": "hat"}
@@ -332,7 +348,20 @@ with col_ref1:
         
     elif char_ref_type == "角色設定圖 (完整複製外貌服裝)":
         char_count = st.number_input("輸入角色圖數量", min_value=1, max_value=10, value=1, step=1)
-        char_labels =[f"[Image {i}]" for i in range(img_counter, img_counter + char_count)]
+        
+        # ⭐ 多人角色指定邏輯 (角色設定圖模式)
+        char_labels =[]
+        if char_count > 1:
+            st.markdown("<div style='font-size:0.85rem; color:#9ca3af; margin-top:5px; margin-bottom:5px;'>👥 多張參考圖可分別指定角色：</div>", unsafe_allow_html=True)
+            
+        for i in range(img_counter, img_counter + char_count):
+            if char_count > 1:
+                desc = st.text_input(f"↳[Image {i}] 對應角色 (選填)", key=f"char_sheet_{i}", placeholder="例如: 右邊的女生")
+                label = f"[Image {i}] as {desc.strip()}" if desc.strip() else f"[Image {i}]"
+                char_labels.append(label)
+            else:
+                char_labels.append(f"[Image {i}]")
+                
         img_counter += char_count
         joined_char_labels = " and ".join(char_labels)
         ref_prompts.append(f"perfectly preserving the exact character appearance, facial features, hairstyle, and full clothing from {joined_char_labels}")
@@ -353,7 +382,7 @@ with col_ref3:
     use_scene_ref = st.checkbox("啟用場景參考圖")
     if use_scene_ref:
         scene_count = st.number_input("輸入場景參考圖數量", min_value=1, max_value=10, value=1, step=1)
-        scene_labels = [f"[Image {i}]" for i in range(img_counter, img_counter + scene_count)]
+        scene_labels =[f"[Image {i}]" for i in range(img_counter, img_counter + scene_count)]
         img_counter += scene_count 
         joined_scene_labels = " and ".join(scene_labels)
         ref_prompts.append(f"referencing background scene from {joined_scene_labels}")
@@ -362,7 +391,7 @@ with col_ref4:
     if is_remake_mode:
         st.checkbox("光線與色調 🔒[重構模式已鎖定]", value=False, disabled=True)
     elif is_character_mode:
-        st.checkbox("光線與色調 🔒 [角色模式已鎖定]", value=False, disabled=True, help="角色設定圖將強制使用棚拍自然光設定。")
+        st.checkbox("光線與色調 🔒[角色模式已鎖定]", value=False, disabled=True, help="角色設定圖將強制使用棚拍自然光設定。")
     else:
         use_light_ref = st.checkbox("啟用光線與色調參考圖", help="若使用「真實照片」作為光線參考，生成的逼真度與質感效果會最佳！")
         if use_light_ref:
@@ -393,54 +422,39 @@ camera_disabled = is_layout_mode or is_character_mode
 with col1:
     style_label = "視覺風格 🔒 [模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
     style_choice = st.selectbox(
-        style_label, 
-        ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
+        style_label,["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
         disabled=is_remake_mode or is_also_style_ref or is_character_mode
     )
     
-    light_label = "光線與色調 🔒[模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
+    light_label = "光線與色調 🔒 [模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
     light_choice = st.selectbox(
-        light_label,
-        ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
+        light_label,["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
         disabled=use_light_ref or is_remake_mode or is_character_mode
     )
 
 with col2:
-    shot_label = "鏡頭大小 🔒 [模式已鎖定]" if camera_disabled else "鏡頭大小"
+    shot_label = "鏡頭大小 🔒[模式已鎖定]" if camera_disabled else "鏡頭大小"
     shot_choice = st.selectbox(shot_label, list(dict_shot.keys()), disabled=camera_disabled)
     
-    angle_label = "鏡頭角度 🔒 [模式已鎖定]" if camera_disabled else "鏡頭角度"
+    angle_label = "鏡頭角度 🔒[模式已鎖定]" if camera_disabled else "鏡頭角度"
     angle_choice = st.selectbox(angle_label, list(dict_angle.keys()), disabled=camera_disabled)
 
-# ⭐ 判斷是否為頂視角，動態鎖定鏡頭位置
-is_top_down = (angle_choice == "頂視 / 鳥瞰 (Top-Down - 正上方往下拍)")
-position_disabled = camera_disabled or is_top_down
-
 with col3:
-    if position_disabled:
-        if camera_disabled:
-            pos_label = "鏡頭位置 🔒 [模式已鎖定]"
-        else:
-            pos_label = "鏡頭位置 🔒 [頂視角已鎖定]"
-    else:
-        pos_label = "鏡頭位置"
-        
-    position_choice = st.selectbox(pos_label, list(dict_position.keys()), disabled=position_disabled)
+    pos_label = "鏡頭位置 🔒[模式已鎖定]" if camera_disabled else "鏡頭位置"
+    position_choice = st.selectbox(pos_label, list(dict_position.keys()), disabled=camera_disabled)
     
     if not camera_disabled:
         st.markdown("**鏡頭位置示意圖：**")
-        # ⭐ 如果選擇了頂視角，雷達圖變為專屬的單一相機俯視圖標
-        if is_top_down:
-            radar_html = "▫️ ▫️ ▫️<br>▫️ 📷 ▫️<br>▫️ ▫️ ▫️"
-            st.markdown(f"<div class='radar-card'>{radar_html}</div>", unsafe_allow_html=True)
-            st.caption("*( 📷 攝影機位於正上方俯視 )*")
-        else:
-            radar_html = dict_position_map[position_choice]
-            st.markdown(f"<div class='radar-card'>{radar_html}</div>", unsafe_allow_html=True)
-            st.caption("*( 👤 人像下方為正前方 )*")
+        radar_html = dict_position_map[position_choice]
+        st.markdown(f"""
+            <div class='radar-card'>
+                {radar_html}
+            </div>
+        """, unsafe_allow_html=True)
+        st.caption("*( 人像下方為正前方 )*")
     
     if is_character_mode:
-        ratio_label = "畫面比例 🔒[模式已鎖定]"
+        ratio_label = "畫面比例 🔒 [模式已鎖定]"
         ratio_options =["橫式簡報滿版 (16:9)"]
         ratio_disabled = True
     else:
@@ -465,7 +479,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 conflicts =[]
 
-if not camera_disabled and not is_top_down:
+if not camera_disabled:
     if "POV" in position_choice:
         conflicts.append("**視角衝突**：選擇了「第一人稱視角 (POV)」，通常會看不到主角本人。")
     face_keywords =["笑", "看", "眼", "嘴", "表情", "臉", "盯"]
@@ -494,7 +508,6 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
     if (is_normal_mode or is_character_mode) and user_keyword.strip() == "":
         st.error("請確實填寫「畫面主角」！")
     else:
-        # [處理負面提示詞]
         custom_neg_tags = ""
         if user_negative.strip() != "":
             word_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
@@ -503,22 +516,16 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
         if is_character_mode:
             custom_neg_tags = "text, 3d render, octane render, cgi, " + custom_neg_tags if custom_neg_tags else "text, 3d render, octane render, cgi"
 
-        #[處理正向提示詞 - 依照模式分流]
         if is_remake_mode:
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
             if user_action.strip():
                 base_prompt += f", changing action to: {user_action.strip()}"
             else:
-                base_prompt += ", maintaining the exact pose and posture of [Image 1]"
+                base_prompt += ", maintaining the exact pose and posture of[Image 1]"
             if user_background.strip():
                 base_prompt += f", changing background to: {user_background.strip()}"
                 
-            # ⭐ 判斷是否加入鏡頭位置
-            if is_top_down:
-                base_prompt += f", moving camera view to: {dict_shot[shot_choice]}, {dict_angle[angle_choice]}"
-            else:
-                base_prompt += f", moving camera view to: {dict_shot[shot_choice]}, {dict_angle[angle_choice]}, {dict_position[position_choice]}"
-                
+            base_prompt += f", moving camera view to: {dict_shot[shot_choice]}, {dict_angle[angle_choice]}, {dict_position[position_choice]}"
             final_prompt = base_prompt + ", " + ", ".join(ref_prompts) if ref_prompts else base_prompt
 
         elif is_layout_mode:
@@ -570,15 +577,12 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
             final_light = custom_light_prompt if use_light_ref else dict_light[light_choice]
             final_style = "" if is_also_style_ref else f"{dict_style[style_choice]}, "
 
-            # ⭐ 判斷是否加入鏡頭位置
-            final_position_str = "" if is_top_down else f"{dict_position[position_choice]}, "
-
             base_prompt = (
                 f"{subject_and_action}, "
                 f"in {user_background}, "
                 f"{dict_shot[shot_choice]}, "
                 f"{dict_angle[angle_choice]}, "
-                f"{final_position_str}"
+                f"{dict_position[position_choice]}, "
                 f"{final_style}"
                 f"{final_light}"
             )
@@ -590,9 +594,9 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
         st.success("成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("**請將滑鼠移至下方黑框的右上角，點擊出現的複製圖示即可一鍵全選複製**")
         
-        # ⭐ 確保如果沒有任何負面詞（且不在角色模式），不顯示 Negative Prompt 區塊
-        if custom_neg_tags:
-            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{custom_neg_tags}"
+        if custom_neg_tags or base_negative:
+            final_neg = f"{custom_neg_tags}, {base_negative}" if (not is_character_mode and custom_neg_tags) else (base_negative if not is_character_mode else custom_neg_tags)
+            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{final_neg}"
         else:
             combined_output = f"{final_prompt}"
             
