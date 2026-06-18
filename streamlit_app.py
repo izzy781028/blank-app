@@ -143,27 +143,18 @@ if not st.session_state.authenticated:
 # ==================== 3. 字典定義區 ====================
 base_quality = "highres, ultra-detailed, 8k resolution"
 
-# ⭐ 更新 3D 視覺風，拔除皮克斯/公仔感，強調高級 CGI 質感
+# ⭐ 更新平面色塊插圖，帶入 Pop Anime 與 Chibi 軟萌元素
 dict_style = {
     "寫實風格感": "photorealistic, Japanese-style editorial photography, 35mm film photography, translucent film, strong yet soft highlights, slightly overexposed areas, clear luminous skin tone, shallow depth of field, soft bokeh, airy atmosphere, subtle lens flare, analog film grain, low saturation with bright fresh colors, transparent feeling, delicate midtone detail, refined texture clarity, soft contrast, cinematic portrait", 
     "賽博龐克風": "Cyber-Lime Edgecore style, futuristic cyberpunk aesthetic, high contrast black shadows, grunge texture, scratched print texture, bold graphic blocks, high saturation colors, dystopian urban atmosphere, rebellious street-tech energy, synthetic lighting, cinematic cyberpunk fashion photography", 
-    "Y2K風": "Y2K Cyber Pop aesthetic, early 2000s internet magazine cover style, bubblegum pink and neon green, glossy highlights, low-resolution digital texture, shiny candy-like surface, overexposed flash photography, dreamy but noisy digital texture, nostalgic cyber party mood, high saturation, high contrast, glossy, chaotic, nostalgic, shiny, ultra detailed", 
+    "Y2K風": "Y2K Cyber Pop aesthetic, early 2000s internet magazine cover style, bubblegum pink and neon green, low-resolution digital texture, overexposed dreamy but noisy digital texture, nostalgic cyber party mood, high saturation, high contrast, nostalgic, ultra detailed, highres, ultra-detailed", 
     "日系清透": "bright airy Japanese aesthetic, high-key exposure, pastel sky blue and fresh green color palette, muted pastel tones, low contrast, dreamy soft focus, clean and refreshing atmosphere, delicate highlights, gentle bokeh, minimal composition, calm visual mood, film photography, light film grain, soft haze, delicate and ethereal", 
     "歐美廣告劇照": "cinematic still, Hollywood movie aesthetic, dramatic lighting, 35mm photograph", 
-    "平面色塊插圖": "lineless flat color block illustration, no outlines, vector graphic style, crisp clean edges, minimalist geometry, soft flat colors, dreamy candy-like atmosphere, playful Japanese pop art, low contrast shadows, bright high-key lighting, youthful cute mood, clean minimal background, adorable but slightly cool-toned aesthetic", 
-    "3D 視覺風": "3D render, high-end CGI, premium 3D visualization, physically based rendering, sleek digital sculpt, highly detailed materials, subsurface scattering, global illumination, octane render, unreal engine 5, volumetric lighting, ray tracing"
+    "平面色塊插圖": "pop anime style, soft flat anime illustration, cute character design, chibi-inspired proportions, clean simplified shapes, high saturation color palette, minimal shading, flat graphic composition, rounded features, dreamy candy-like atmosphere, soft toy-like silhouette, playful Japanese pop illustration, clean bold shapes, subtle paper grain, low contrast shadows, bright high-key lighting, youthful cute mood, modern anime icon style, minimal background, adorable but slightly cool-toned aesthetic", 
+    "3D 視覺風": "A cute whimsical mascot character, rounded simplified body shape, oversized glossy black-and-white cartoon eyes, tiny soft limbs, adorable exaggerated expression, tactile plush toy texture, visible woven knit fibers, pastel candy color palette, high-key soft lighting, low contrast, clean bright composition, gentle shadows, toy photography style, 3D soft sculpture, kawaii dreamcore, cozy and playful atmosphere, ultra detailed, high resolution"
 }
 
-# ⭐ 移除人物部位綁定 (如半身, 全身)，全面升級為電影攝影機術語
-dict_shot = {
-    "極特寫 (Extreme Close-up)": "extreme close-up shot", 
-    "特寫 (Close-up)": "close-up shot", 
-    "中近景 (Medium Close-up)": "medium close-up shot", 
-    "中景 (Medium Shot)": "medium shot", 
-    "全景 (Full Shot)": "full shot, long shot", 
-    "遠景 (Wide Shot)": "wide shot, wide angle", 
-    "超大遠景 (Extreme Wide Shot)": "extreme wide shot, extreme long shot, establishing shot"
-}
+dict_shot = {"極特寫": "extreme close-up", "特寫": "close-up", "半身": "medium shot, waist up", "膝上景": "cowboy shot", "全身景": "full body", "遠景": "wide shot, wide angle", "超大遠景": "extreme wide shot, extreme long shot, establishing shot, tiny subject"}
 
 dict_angle = {
     "平視 (Eye Level)": "eye-level angle, straight-on", 
@@ -504,7 +495,7 @@ if not camera_disabled and not is_top_down:
         conflicts.append("**視角衝突**：選擇了「第一人稱視角 (POV)」，通常會看不到主體。")
     face_keywords =["笑", "看", "眼", "嘴", "表情", "臉", "盯"]
     if ("後方" in position_choice) and any(word in user_action for word in face_keywords):
-        conflicts.append("**狀態衝突**：背後視角與臉部表情描述衝突。")
+        conflicts.append("**狀態衝突**：背後視角與臉部表情/視線描述衝突。")
     if "極特寫" in shot_choice and "過肩鏡頭" in position_choice:
         conflicts.append("**鏡頭衝突**：「極特寫」無法容納「過肩鏡頭」所需的前景。")
 
