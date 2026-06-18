@@ -6,23 +6,20 @@ st.set_page_config(layout="wide", page_title="AI 圖片提示詞生成器")
 # 注入自定義 CSS 美化介面
 custom_css = """
 <style>
-    /* 隱藏預設的選單與底部浮水印 */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* 替換整體背景為高級暗色漸層 */
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #09090b 50%, #1e1b4b 100%);
         background-attachment: fixed;
         color: #f8fafc;
     }
 
-    /* 確保原本預設的白色/黑色底色透明化，讓漸層透出來 */[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: transparent !important;
     }
     
-    /* 漸層大標題 */
     .main-title {
         background: linear-gradient(135deg, #818cf8 0%, #f472b6 100%);
         -webkit-background-clip: text;
@@ -33,7 +30,6 @@ custom_css = """
         padding-bottom: 10px;
     }
     
-    /* 副標題與敘述小字 */
     .sub-title {
         font-size: 1.1rem;
         color: #9ca3af;
@@ -41,7 +37,6 @@ custom_css = """
         font-weight: 500;
     }
 
-    /* 區塊標題 (帶有左側色塊裝飾) */
     .section-header {
         font-size: 1.4rem;
         font-weight: 700;
@@ -53,7 +48,6 @@ custom_css = """
         letter-spacing: 0.5px;
     }
 
-    /* 所有 Alert 框 (Info, Warning, Error) 增加大圓角與微透明 */
     [data-testid="stAlert"] {
         border-radius: 12px;
         border: none;
@@ -63,7 +57,6 @@ custom_css = """
         color: #e5e7eb;
     }
 
-    /* 輸入框與下拉選單的圓角與預設顏色 */
     .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
         border-radius: 10px !important;
         background-color: rgba(0, 0, 0, 0.2) !important;
@@ -71,7 +64,6 @@ custom_css = """
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* ⭐ 強化被鎖定 (Disabled) 元件的整體視覺效果 */
     div[data-testid="stDisabled"] {
         opacity: 0.6 !important;
         cursor: not-allowed !important;
@@ -89,7 +81,6 @@ custom_css = """
         border-color: rgba(255, 255, 255, 0.02) !important;
     }
 
-    /* 主要按鈕美化 (漸層 + 動畫) */
     div.stButton > button:first-child {
         background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
         color: white;
@@ -108,7 +99,6 @@ custom_css = """
         box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
     }
     
-    /* 模式選擇 (Radio Button) 加上背景框使其像開關 */
     div.row-widget.stRadio > div {
         background-color: rgba(255, 255, 255, 0.03);
         padding: 15px 20px;
@@ -116,7 +106,6 @@ custom_css = """
         border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* 雷達圖卡片美化 */
     .radar-card {
         background: linear-gradient(145deg, rgba(79,70,229,0.1) 0%, rgba(236,72,153,0.05) 100%);
         border: 1px solid rgba(255,255,255,0.05);
@@ -154,40 +143,38 @@ if not st.session_state.authenticated:
 # ==================== 3. 字典定義區 ====================
 base_quality = "highres, ultra-detailed, 8k resolution"
 
-# ⭐ 更新日系清透提示詞
+# ⭐ 大幅升級：新增/更名三個潮流視覺風格，並刪除兩個舊風格
 dict_style = {
-    "寫實風格感": "photorealistic, shot on DSLR, 35mm lens, muted color tones, delicate midtone detail, subtle film grain, refined texture clarity", 
-    "高級精品感": "high-end luxury, editorial photography, sleek, sophisticated", 
-    "科技未來感": "cyberpunk, sci-fi, futuristic, glowing neon lights, intricate mechanical details", 
-    "溫暖生活感": "warm lifestyle, slice of life, cozy atmosphere, candid photography", 
-    "年輕潮流感": "trendy streetwear, youth culture, vibrant colors", 
+    "寫實風格感": "photorealistic, Japanese-style editorial photography, 35mm film photography, translucent film, strong yet soft highlights, slightly overexposed areas, clear luminous skin tone, shallow depth of field, soft bokeh, airy atmosphere, subtle lens flare, analog film grain, low saturation with bright fresh colors, transparent feeling, delicate midtone detail, refined texture clarity, soft contrast, cinematic portrait", 
+    "賽博龐克風": "Cyber-Lime Edgecore style, futuristic cyberpunk aesthetic, high contrast black shadows, grunge texture, scratched print texture, bold graphic blocks, high saturation colors, dystopian urban atmosphere, rebellious street-tech energy, synthetic lighting, cinematic cyberpunk fashion photography", 
+    "Y2K風": "Y2K Cyber Pop aesthetic, early 2000s internet magazine cover style, bubblegum pink and neon green, glossy highlights, low-resolution digital texture, shiny candy-like surface, overexposed flash photography, dreamy but noisy digital texture, nostalgic cyber party mood, high saturation, high contrast, glossy, chaotic, nostalgic, shiny, ultra detailed", 
     "日系清透": "bright airy Japanese aesthetic, high-key exposure, pastel sky blue and fresh green color palette, muted pastel tones, low contrast, dreamy soft focus, clean and refreshing atmosphere, delicate highlights, gentle bokeh, minimal composition, calm visual mood, film photography, light film grain, soft haze, delicate and ethereal", 
-    "歐美廣告劇照": "cinematic still, Hollywood movie aesthetic, dramatic lighting, 35mm film", 
-    "插畫風": "digital illustration, vibrant colors, flat design, vector art", 
-    "3D 視覺風": "3D render, octane render, unreal engine 5, path tracing"
+    "歐美廣告劇照": "cinematic still, Hollywood movie aesthetic, dramatic lighting, 35mm photograph", 
+    "平面色塊插圖": "soft flat illustration, clean simplified shapes, minimal shading, smooth cel shading, flat graphic composition, dreamy candy-like atmosphere, playful Japanese pop illustration, clean bold shapes, subtle paper grain, low contrast shadows, bright high-key lighting, youthful cute mood, minimal background, adorable but slightly cool-toned aesthetic", 
+    "3D 視覺風": "3D render, cute whimsical mascot design, rounded simplified body shape, 3D soft sculpture, cozy tactile material, pastel candy color palette, soft high-key lighting, volumetric lighting, low contrast, clean bright composition, kawaii dreamcore, playful surreal world, octane render, unreal engine 5, path tracing"
 }
 
 dict_shot = {"極特寫": "extreme close-up", "特寫": "close-up", "半身": "medium shot, waist up", "膝上景": "cowboy shot", "全身景": "full body", "遠景": "wide shot, wide angle", "超大遠景": "extreme wide shot, extreme long shot, establishing shot, tiny subject"}
 
 dict_angle = {
-    "平視 (Eye Level)": "eye-level angle", 
-    "仰視 (Low Angle)": "low angle shot", 
-    "俯視 (High Angle)": "high angle shot", 
-    "頂視 / 鳥瞰 (Top-Down)": "top-down view",
-    "傾斜荷蘭角 (Dutch Angle)": "dutch angle"
+    "平視 (Eye Level)": "eye-level angle, straight-on", 
+    "仰視 (Low Angle - 攝影機在下)": "low angle shot, shot from below, camera pointing upward", 
+    "俯視 (High Angle - 攝影機在上)": "high angle shot, shot from above, downward angle", 
+    "頂視 / 鳥瞰 (Top-Down - 正上方往下拍)": "top-down view, shot from directly above",
+    "傾斜荷蘭角 (Dutch Angle)": "dutch angle, tilted frame"
 }
 
 dict_position = {
-    "正前方拍攝": "front view",
-    "左前方拍攝": "front-left view",
-    "右前方拍攝": "front-right view",
-    "正左側拍攝": "left profile view",
-    "正右側拍攝": "right profile view",
-    "左後方拍攝": "back-left view",
-    "右後方拍攝": "back-right view",
-    "正後方拍攝": "back view",
-    "過肩鏡頭 (Over the shoulder)": "over the shoulder shot",
-    "第一人稱視角 (POV)": "first-person view, POV"
+    "正前方拍攝": "front view, camera placed straight ahead",
+    "左前方拍攝": "front-left view, camera placed front-left",
+    "右前方拍攝": "front-right view, camera placed front-right",
+    "正左側拍攝": "left profile view, exact left side view",
+    "正右側拍攝": "right profile view, exact right side view",
+    "左後方拍攝": "back-left view, camera placed behind left shoulder",
+    "右後方拍攝": "back-right view, camera placed behind right shoulder",
+    "正後方拍攝": "back view, exact shot from behind",
+    "過肩鏡頭 (Over the shoulder)": "over the shoulder shot, OTS",
+    "第一人稱視角 (POV)": "first-person view, POV, seeing through eyes"
 }
 
 dict_position_map = {
@@ -207,11 +194,11 @@ dict_light = {
     "白天自然光": "natural light, sunlight", 
     "黃昏日落暖光 (Magic hour)": "golden hour, sunset lighting", 
     "夜晚": "nighttime, ambient lighting", 
-    "棚拍柔光": "soft diffused light, even illumination", 
+    "棚拍柔光": "soft diffused light, even illumination, flawless lighting, gentle shadows", 
     "高反差戲劇光": "dramatic lighting, high contrast", 
-    "清冷藍調 (冷色溫)": "cool color temperature, bluish tint, cinematic cool tones",
-    "溫潤暖調 (暖色溫)": "warm color temperature, cozy lighting, cinematic warm tones",
-    "冷色科技光": "blue and teal lighting"
+    "清冷藍調 (冷色溫)": "cool color temperature, bluish tint, cold lighting, cool color grading, cinematic cool tones",
+    "溫潤暖調 (暖色溫)": "warm color temperature, warm tint, cozy lighting, warm color grading, cinematic warm tones",
+    "冷色科技光": "cool tone, blue and teal lighting"
 }
 
 dict_ratio = {
@@ -284,6 +271,7 @@ with col_text2:
 
 with col_text3:
     bg_label = "背景場景 (Where)"
+    
     if is_remake_mode or is_layout_mode:
         bg_help = "若留白，將維持原場景"
         bg_value = ""
@@ -505,7 +493,7 @@ if not camera_disabled and not is_top_down:
         conflicts.append("**視角衝突**：選擇了「第一人稱視角 (POV)」，通常會看不到主體。")
     face_keywords =["笑", "看", "眼", "嘴", "表情", "臉", "盯"]
     if ("後方" in position_choice) and any(word in user_action for word in face_keywords):
-        conflicts.append("**狀態衝突**：背後視角與臉部表情/視線描述衝突。")
+        conflicts.append("**狀態衝突**：背後視角與臉部表情描述衝突。")
     if "極特寫" in shot_choice and "過肩鏡頭" in position_choice:
         conflicts.append("**鏡頭衝突**：「極特寫」無法容納「過肩鏡頭」所需的前景。")
 
@@ -533,9 +521,6 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
         if user_negative.strip() != "":
             word_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
-            
-        if is_character_mode:
-            custom_neg_tags = "text, 3d render, octane render, cgi, " + custom_neg_tags if custom_neg_tags else "text, 3d render, octane render, cgi"
 
         if is_remake_mode:
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
@@ -623,10 +608,17 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
         st.success("成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("**請將滑鼠移至下方黑框的右上角，點擊出現的複製圖示即可一鍵全選複製**")
         
-        if custom_neg_tags:
-            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{custom_neg_tags}"
+        # 處理負面詞組合
+        if is_character_mode:
+            final_neg = "text, 3d render, octane render, cgi"
+            if custom_neg_tags:
+                final_neg += f", {custom_neg_tags}"
+            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{final_neg}"
         else:
-            combined_output = f"{final_prompt}"
+            if custom_neg_tags:
+                combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{custom_neg_tags}"
+            else:
+                combined_output = f"{final_prompt}"
             
         st.code(combined_output, language="text")
         
