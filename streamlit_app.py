@@ -143,18 +143,27 @@ if not st.session_state.authenticated:
 # ==================== 3. 字典定義區 ====================
 base_quality = "highres, ultra-detailed, 8k resolution"
 
-# ⭐ 大幅升級：新增/更名三個潮流視覺風格，並刪除兩個舊風格
+# ⭐ 更新 3D 視覺風，拔除皮克斯/公仔感，強調高級 CGI 質感
 dict_style = {
     "寫實風格感": "photorealistic, Japanese-style editorial photography, 35mm film photography, translucent film, strong yet soft highlights, slightly overexposed areas, clear luminous skin tone, shallow depth of field, soft bokeh, airy atmosphere, subtle lens flare, analog film grain, low saturation with bright fresh colors, transparent feeling, delicate midtone detail, refined texture clarity, soft contrast, cinematic portrait", 
     "賽博龐克風": "Cyber-Lime Edgecore style, futuristic cyberpunk aesthetic, high contrast black shadows, grunge texture, scratched print texture, bold graphic blocks, high saturation colors, dystopian urban atmosphere, rebellious street-tech energy, synthetic lighting, cinematic cyberpunk fashion photography", 
     "Y2K風": "Y2K Cyber Pop aesthetic, early 2000s internet magazine cover style, bubblegum pink and neon green, glossy highlights, low-resolution digital texture, shiny candy-like surface, overexposed flash photography, dreamy but noisy digital texture, nostalgic cyber party mood, high saturation, high contrast, glossy, chaotic, nostalgic, shiny, ultra detailed", 
     "日系清透": "bright airy Japanese aesthetic, high-key exposure, pastel sky blue and fresh green color palette, muted pastel tones, low contrast, dreamy soft focus, clean and refreshing atmosphere, delicate highlights, gentle bokeh, minimal composition, calm visual mood, film photography, light film grain, soft haze, delicate and ethereal", 
     "歐美廣告劇照": "cinematic still, Hollywood movie aesthetic, dramatic lighting, 35mm photograph", 
-    "平面色塊插圖": "soft flat illustration, clean simplified shapes, minimal shading, smooth cel shading, flat graphic composition, dreamy candy-like atmosphere, playful Japanese pop illustration, clean bold shapes, subtle paper grain, low contrast shadows, bright high-key lighting, youthful cute mood, minimal background, adorable but slightly cool-toned aesthetic", 
-    "3D 視覺風": "3D render, cute whimsical mascot design, rounded simplified body shape, 3D soft sculpture, cozy tactile material, pastel candy color palette, soft high-key lighting, volumetric lighting, low contrast, clean bright composition, kawaii dreamcore, playful surreal world, octane render, unreal engine 5, path tracing"
+    "平面色塊插圖": "lineless flat color block illustration, no outlines, vector graphic style, crisp clean edges, minimalist geometry, soft flat colors, dreamy candy-like atmosphere, playful Japanese pop art, low contrast shadows, bright high-key lighting, youthful cute mood, clean minimal background, adorable but slightly cool-toned aesthetic", 
+    "3D 視覺風": "3D render, high-end CGI, premium 3D visualization, physically based rendering, sleek digital sculpt, highly detailed materials, subsurface scattering, global illumination, octane render, unreal engine 5, volumetric lighting, ray tracing"
 }
 
-dict_shot = {"極特寫": "extreme close-up", "特寫": "close-up", "半身": "medium shot, waist up", "膝上景": "cowboy shot", "全身景": "full body", "遠景": "wide shot, wide angle", "超大遠景": "extreme wide shot, extreme long shot, establishing shot, tiny subject"}
+# ⭐ 移除人物部位綁定 (如半身, 全身)，全面升級為電影攝影機術語
+dict_shot = {
+    "極特寫 (Extreme Close-up)": "extreme close-up shot", 
+    "特寫 (Close-up)": "close-up shot", 
+    "中近景 (Medium Close-up)": "medium close-up shot", 
+    "中景 (Medium Shot)": "medium shot", 
+    "全景 (Full Shot)": "full shot, long shot", 
+    "遠景 (Wide Shot)": "wide shot, wide angle", 
+    "超大遠景 (Extreme Wide Shot)": "extreme wide shot, extreme long shot, establishing shot"
+}
 
 dict_angle = {
     "平視 (Eye Level)": "eye-level angle, straight-on", 
@@ -419,13 +428,15 @@ camera_disabled = is_layout_mode or is_character_mode
 with col1:
     style_label = "視覺風格 🔒 [模式已鎖定]" if (is_remake_mode or is_also_style_ref or is_character_mode) else "視覺風格"
     style_choice = st.selectbox(
-        style_label,["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
+        style_label, 
+        ["維持原圖風格"] + list(dict_style.keys()) if is_layout_mode else list(dict_style.keys()), 
         disabled=is_remake_mode or is_also_style_ref or is_character_mode
     )
     
     light_label = "光線與色調 🔒 [模式已鎖定]" if (use_light_ref or is_remake_mode or is_character_mode) else "光線與色調"
     light_choice = st.selectbox(
-        light_label,["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
+        light_label,
+        ["維持原圖光影"] + list(dict_light.keys()) if is_layout_mode else list(dict_light.keys()), 
         disabled=use_light_ref or is_remake_mode or is_character_mode
     )
 
@@ -521,6 +532,9 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
         if user_negative.strip() != "":
             word_list =[word.strip() for word in user_negative.replace(',', ' ').split() if word.strip()]
             custom_neg_tags = ", ".join(word_list)
+            
+        if is_character_mode:
+            custom_neg_tags = "text, 3d render, octane render, cgi, " + custom_neg_tags if custom_neg_tags else "text, 3d render, octane render, cgi"
 
         if is_remake_mode:
             base_prompt = "maintaining the exact subject, visual style, color grading and lighting of [Image 1]"
@@ -608,17 +622,10 @@ if st.button("組合生成咒語 (Generate Prompt)", type="primary", use_contain
         st.success("成功生成提示詞！請點擊右上方按鈕一鍵複製。")
         st.markdown("**請將滑鼠移至下方黑框的右上角，點擊出現的複製圖示即可一鍵全選複製**")
         
-        # 處理負面詞組合
-        if is_character_mode:
-            final_neg = "text, 3d render, octane render, cgi"
-            if custom_neg_tags:
-                final_neg += f", {custom_neg_tags}"
-            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{final_neg}"
+        if custom_neg_tags:
+            combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{custom_neg_tags}"
         else:
-            if custom_neg_tags:
-                combined_output = f"{final_prompt}\n\n[Negative Prompt]\n{custom_neg_tags}"
-            else:
-                combined_output = f"{final_prompt}"
+            combined_output = f"{final_prompt}"
             
         st.code(combined_output, language="text")
         
