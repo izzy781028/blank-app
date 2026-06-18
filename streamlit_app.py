@@ -143,7 +143,6 @@ if not st.session_state.authenticated:
 # ==================== 3. 字典定義區 ====================
 base_quality = "highres, ultra-detailed, 8k resolution"
 
-# ⭐ 更新平面色塊插圖，帶入 Pop Anime 與 Chibi 軟萌元素
 dict_style = {
     "寫實風格感": "photorealistic, Japanese-style editorial photography, 35mm film photography, translucent film, strong yet soft highlights, slightly overexposed areas, clear luminous skin tone, shallow depth of field, soft bokeh, airy atmosphere, subtle lens flare, analog film grain, low saturation with bright fresh colors, transparent feeling, delicate midtone detail, refined texture clarity, soft contrast, cinematic portrait", 
     "賽博龐克風": "Cyber-Lime Edgecore style, futuristic cyberpunk aesthetic, high contrast black shadows, grunge texture, scratched print texture, bold graphic blocks, high saturation colors, dystopian urban atmosphere, rebellious street-tech energy, synthetic lighting, cinematic cyberpunk fashion photography", 
@@ -154,7 +153,16 @@ dict_style = {
     "3D 視覺風": "A cute whimsical mascot character, rounded simplified body shape, oversized glossy black-and-white cartoon eyes, tiny soft limbs, adorable exaggerated expression, tactile plush toy texture, visible woven knit fibers, pastel candy color palette, high-key soft lighting, low contrast, clean bright composition, gentle shadows, toy photography style, 3D soft sculpture, kawaii dreamcore, cozy and playful atmosphere, ultra detailed, high resolution"
 }
 
-dict_shot = {"極特寫": "extreme close-up", "特寫": "close-up", "半身": "medium shot, waist up", "膝上景": "cowboy shot", "全身景": "full body", "遠景": "wide shot, wide angle", "超大遠景": "extreme wide shot, extreme long shot, establishing shot, tiny subject"}
+# ⭐ 徹底移除半身、全身、膝上景，改為純粹的攝影鏡頭語言
+dict_shot = {
+    "極特寫 (Extreme Close-Up)": "extreme close-up shot", 
+    "特寫 (Close-Up)": "close-up shot", 
+    "中近景 (Medium Close-Up)": "medium close-up shot", 
+    "中景 (Medium Shot)": "medium shot", 
+    "全景 (Full Shot / Long Shot)": "full shot, long shot", 
+    "遠景 (Wide Shot)": "wide shot, wide angle", 
+    "超大遠景 (Extreme Wide Shot)": "extreme wide shot, extreme long shot, establishing shot"
+}
 
 dict_angle = {
     "平視 (Eye Level)": "eye-level angle, straight-on", 
@@ -495,7 +503,8 @@ if not camera_disabled and not is_top_down:
         conflicts.append("**視角衝突**：選擇了「第一人稱視角 (POV)」，通常會看不到主體。")
     face_keywords =["笑", "看", "眼", "嘴", "表情", "臉", "盯"]
     if ("後方" in position_choice) and any(word in user_action for word in face_keywords):
-        conflicts.append("**狀態衝突**：背後視角與臉部表情/視線描述衝突。")
+        conflicts.append("**狀態衝突**：背後視角與臉部表情描述衝突。")
+    # ⭐ 更新極特寫防護邏輯
     if "極特寫" in shot_choice and "過肩鏡頭" in position_choice:
         conflicts.append("**鏡頭衝突**：「極特寫」無法容納「過肩鏡頭」所需的前景。")
 
